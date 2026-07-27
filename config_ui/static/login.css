@@ -1,0 +1,131 @@
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(180deg, #f5f5f5 0%, #e2e2e2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    background: #fff;
+    padding: 0.8rem 2rem;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.topbar-logo-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.auth-title-logo {
+    display: inline-block;
+    color: #fff;
+    font-family: "Chewy", "Cooper Black", "Arial Rounded MT Bold", system-ui, sans-serif;
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.82);
+    text-shadow:
+        0 2px 0 rgba(0, 0, 0, 0.8),
+        2px 3px 0 rgba(0, 0, 0, 0.72),
+        -1px 2px 0 rgba(0, 0, 0, 0.62);
+}
+
+.login-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+    padding: 3rem 2rem;
+    flex-wrap: wrap;
+}
+
+.eye-anim {
+    width: min(380px, 38vw);
+    height: auto;
+    filter: drop-shadow(0 12px 25px rgba(0, 0, 0, 0.18));
+}
+
+.login-card {
+    background: #fff;
+    width: 320px;
+    padding: 2.5rem 2rem 2rem;
+    border-top: 4px solid #c8102e;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    border-radius: 2px;
+}
+
+.login-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.input-icon {
+    position: relative;
+    display: block;
+}
+
+.input-icon::before {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.input-user::before { content: "\1F464"; }
+.input-pass::before { content: "\1F512"; }
+
+.input-icon input {
+    width: 100%;
+    padding: 0.8rem 0.8rem 0.8rem 2.5rem;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+}
+
+.input-icon input:focus {
+    outline: none;
+    border-color: #c8102e;
+}
+
+.login-card button {
+    background: #c8102e;
+    color: #fff;
+    border: none;
+    padding: 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+}
+
+.login-card button:hover {
+    background: #a30d26;
+}
+
+.login-error {
+    color: #c8102e;
+    font-size: 0.85rem;
+    margin: -0.5rem 0 0;
+}
+
+.login-footer {
+    text-align: center;
+    color: #888;
+    font-size: 0.8rem;
+    padding: 1.5rem;
+}

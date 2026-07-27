@@ -1,0 +1,16 @@
+# Entornos y dependencias
+venv/
+__pycache__/
+*.pyc
+
+# Configuración y secretos
+.env
+
+# Datos y modelos generados
+models/
+eventos.db
+logs/
+config_ui/auth_store.json
+
+# Otros
+*.log

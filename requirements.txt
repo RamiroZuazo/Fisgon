@@ -1,0 +1,39 @@
+# Versiones FIJADAS (no ">=") a propósito: una instalación nueva con
+# rangos abiertos puede resolver una versión distinta de onnxruntime y
+# pisar el proveedor DirectML con la variante CPU sin avisar (nos pasó dos
+# veces durante el desarrollo). Ver INSTALACION.md antes de tocar este
+# archivo — el orden de instalación importa tanto como las versiones.
+
+# Captura y visión
+opencv-python==4.13.0.92
+
+# Inferencia (GPU AMD via DirectML, no CUDA). CRÍTICO: instalar SOLO este
+# paquete, nunca "onnxruntime" a secas (ver INSTALACION.md).
+onnxruntime-directml==1.24.4
+ultralytics==8.4.35
+
+# torch/torchvision/numpy fijados EXPLÍCITAMENTE: ultralytics solo pide
+# "torch>=1.8.0" (rango abierto), así que sin fijar esto una instalación
+# nueva baja las versiones más nuevas disponibles ese día. Combinación
+# validada y funcionando: torch==2.4.1 + numpy==2.4.4. Con numpy 2.5.1
+# (más nueva, la que baja pip por defecto) el import de ultralytics rompe
+# con "cannot import name 'NP_SUPPORTED_MODULES' from
+# 'torch._dynamo.utils'" — torch 2.4.1 no reconoce esa versión de numpy
+# internamente. El error no menciona numpy para nada, así que si esto
+# vuelve a pasar con otra combinación de versiones, sospechar de numpy
+# primero (confirmar con: python -c "import torch._dynamo").
+torch==2.4.1
+torchvision==0.19.1
+numpy==2.4.4
+
+# Configuración
+pyyaml==6.0.3
+
+# Interfaz de configuración local (config_ui/) — solo librería estándar
+# (http.server), sin FastAPI/Pydantic: en este equipo Device Guard / Smart
+# App Control bloquea las extensiones compiladas de Pydantic. No hace falta
+# instalar nada extra para config_ui.
+
+# Subida de eventos a la API en la nube
+requests==2.33.1
+python-dotenv==1.0.0
