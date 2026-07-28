@@ -1,33 +1,30 @@
 inference:
   model_path: models/best.onnx
-  confidence: 0.7
+  confidence: 0.01
   iou: 0.45
   inference_fps: 5
-  # Cuántos frames de distintas cámaras se juntan como máximo en una sola
-  # llamada al modelo. El costo de CPU de cada llamada es casi fijo (no
-  # depende mucho de cuántos frames se le pasen), así que batchear varias
-  # cámaras juntas sale mucho más barato que una llamada por cámara. 4
-  # porque es el máximo de cámaras soportado en este proyecto.
   max_batch_size: 4
 motion_detection:
-  # Evita mandar frames al modelo cuando no hay nada cambiando en la escena
-  # (la mayor parte del tiempo en una cámara de seguridad). "cooldown_seconds"
-  # y "floor_fps" existen para NO perder un arma que quedó quieta en cámara:
-  # tras dejar de detectar movimiento, en vez de cortar del todo, se sigue
-  # revisando a un ritmo mínimo (floor_fps) por si hay algo quieto en escena.
   enabled: true
-  threshold: 25            # sensibilidad del diff de píxeles (0-255, más bajo = más sensible)
-  min_area_fraction: 0.01  # fracción mínima de la imagen que debe cambiar para contar como movimiento
-  cooldown_seconds: 10      # tras el último movimiento, seguir a inference_fps completo este tiempo
-  floor_fps: 1              # fps mínimo aun sin movimiento, para no perder un objeto quieto
+  threshold: 25
+  min_area_fraction: 0.01
+  cooldown_seconds: 10
+  floor_fps: 1
 event_validation:
-  min_consecutive_detections: 3
+  min_consecutive_detections: 2
   window_seconds: 5
 api:
-  # Se usa solo si no hay .env con FISGON_API_URL (ver upload/upload_worker.py)
   base_url: https://fisgon-trial-account-backend-921400978711.us-central1.run.app
 cameras:
 - id: cam_1
   name: Webcam de prueba (PC)
   rtsp_url: '0'
+  active: false
+- id: cam_2
+  name: patio
+  rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/401
+  active: true
+- id: cam_3
+  name: Entrada
+  rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/201
   active: true

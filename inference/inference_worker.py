@@ -34,6 +34,7 @@ Uso típico (ver main.py):
 import logging
 import queue
 import threading
+from collections import defaultdict
 
 logger = logging.getLogger("inference_worker")
 
@@ -64,6 +65,16 @@ class InferenceWorker:
 
         self._thread = None
         self._stop_event = threading.Event()
+        # frames que efectivamente pasaron por modelo.predict(), por cámara —
+        # para poder confirmar (ej. en logs) que una cámara dada llega a
+        # correr por el modelo y no solo se conecta/encola.
+        self._frames_procesados = defaultdict(int)
+        self._stats_lock = threading.Lock()
+
+    def get_stats(self) -> dict:
+        """{camera_id: frames procesados por el modelo desde que arrancó el worker}."""
+        with self._stats_lock:
+            return dict(self._frames_procesados)
 
     def start(self):
         self._stop_event.clear()
@@ -107,6 +118,11 @@ class InferenceWorker:
             iou=self.iou,
             verbose=False,
         )
+
+        with self._stats_lock:
+            for item in lote:
+                self._frames_procesados[item["camera_id"]] += 1
+        logger.debug(f"Lote procesado: {[item['camera_id'] for item in lote]}")
 
         for item, resultado in zip(lote, resultados):
             self._procesar_resultado(item, resultado)

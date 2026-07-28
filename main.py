@@ -117,7 +117,10 @@ def main():
         while not stop_event_principal.is_set():
             stop_event_principal.wait(5)
             if not stop_event_principal.is_set():
-                logger.info(f"Estado cámaras: {camera_manager.get_status()} | frames en cola: {frame_queue.qsize()}")
+                logger.info(
+                    f"Estado cámaras: {camera_manager.get_status()} | frames en cola: {frame_queue.qsize()} "
+                    f"| frames procesados por el modelo: {inference_worker.get_stats()}"
+                )
     finally:
         logger.info("Deteniendo cámaras...")
         camera_manager.stop_all()
