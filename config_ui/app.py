@@ -155,10 +155,10 @@ def render_login(error: str = None) -> str:
 
         <div class="login-card">
             <form method="post" action="/login">
-                <label class="input-icon input-user">
+                <label class="input-field">
                     <input type="text" name="username" placeholder="Nombre de usuario" autofocus required autocomplete="username">
                 </label>
-                <label class="input-icon input-pass">
+                <label class="input-field">
                     <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
                 </label>
                 {error_html}

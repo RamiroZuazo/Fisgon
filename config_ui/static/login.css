@@ -72,32 +72,18 @@ body {
     gap: 1.2rem;
 }
 
-.input-icon {
-    position: relative;
+.input-field {
     display: block;
 }
 
-.input-icon::before {
-    position: absolute;
-    left: 0.8rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1rem;
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-.input-user::before { content: "\1F464"; }
-.input-pass::before { content: "\1F512"; }
-
-.input-icon input {
+.input-field input {
     width: 100%;
-    padding: 0.8rem 0.8rem 0.8rem 2.5rem;
+    padding: 0.8rem;
     border: 1px solid #ccc;
     font-size: 0.95rem;
 }
 
-.input-icon input:focus {
+.input-field input:focus {
     outline: none;
     border-color: #c8102e;
 }

@@ -1,6 +1,6 @@
 inference:
   model_path: models/best.onnx
-  confidence: 0.01
+  confidence: 0.7
   iou: 0.45
   inference_fps: 5
   max_batch_size: 4
@@ -23,8 +23,12 @@ cameras:
 - id: cam_2
   name: patio
   rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/401
-  active: true
+  active: false
 - id: cam_3
   name: Entrada
   rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/201
+  active: false
+- id: cam_4
+  name: Tiandy
+  rtsp_url: rtsp://admin:Fisgon2026@192.168.100.31:554/profile1
   active: true
