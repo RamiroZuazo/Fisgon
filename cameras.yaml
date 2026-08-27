@@ -13,6 +13,13 @@ motion_detection:
 event_validation:
   min_consecutive_detections: 2
   window_seconds: 5
+event_video:
+  enabled: true
+  seconds_before: 10
+  seconds_after: 10
+  fps: 5
+  max_width: 960
+  jpeg_quality: 80
 api:
   base_url: https://fisgon-trial-account-backend-921400978711.us-central1.run.app
 cameras:

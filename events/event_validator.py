@@ -115,6 +115,8 @@ class EventValidator:
             "frames_validated": frames_validated,
             "snapshot_base64": snapshot_base64,
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            # Solo se usa localmente para centrar el clip. upload_worker no lo envía.
+            "detection_monotonic": deteccion["timestamp"],
         }
         self.on_event_confirmed(payload)
 

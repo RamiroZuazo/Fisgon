@@ -31,8 +31,12 @@ CREATE TABLE IF NOT EXISTS events (
     bbox TEXT NOT NULL,
     frames_validated INTEGER NOT NULL DEFAULT 1,
     snapshot_base64 TEXT,
+    video_base64 TEXT,
     timestamp TEXT NOT NULL,
     uploaded INTEGER NOT NULL DEFAULT 0,
+    remote_event_id INTEGER,
+    video_ready INTEGER NOT NULL DEFAULT 1,
+    video_uploaded INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """
@@ -49,13 +53,35 @@ class LocalBuffer:
         # upload_worker (thread propio) lee/actualiza; el Lock serializa el acceso.
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.execute(SCHEMA)
+        self._migrar_columnas_video()
+        self._recuperar_clips_interrumpidos()
         self._conn.commit()
 
-    def save_pending(self, event: dict):
+    def _migrar_columnas_video(self):
+        """Actualiza eventos.db existentes sin perder eventos pendientes."""
+        columnas = {fila[1] for fila in self._conn.execute("PRAGMA table_info(events)")}
+        if "video_base64" not in columnas:
+            self._conn.execute("ALTER TABLE events ADD COLUMN video_base64 TEXT")
+        if "remote_event_id" not in columnas:
+            self._conn.execute("ALTER TABLE events ADD COLUMN remote_event_id INTEGER")
+        if "video_ready" not in columnas:
+            self._conn.execute("ALTER TABLE events ADD COLUMN video_ready INTEGER NOT NULL DEFAULT 1")
+        if "video_uploaded" not in columnas:
+            self._conn.execute("ALTER TABLE events ADD COLUMN video_uploaded INTEGER NOT NULL DEFAULT 1")
+
+    def _recuperar_clips_interrumpidos(self):
+        """Un clip en generación no sobrevive al reinicio; libera esos eventos."""
+        self._conn.execute(
+            "UPDATE events SET video_ready = 1, video_uploaded = 1 "
+            "WHERE video_ready = 0"
+        )
+
+    def save_pending(self, event: dict, wait_for_video: bool = False) -> int:
         with self._lock:
-            self._conn.execute(
+            cursor = self._conn.execute(
                 "INSERT INTO events (camera_id, object_class, confidence, bbox, "
-                "frames_validated, snapshot_base64, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "frames_validated, snapshot_base64, video_base64, timestamp, video_ready, video_uploaded) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     event["camera_id"],
                     event["object_class"],
@@ -63,17 +89,36 @@ class LocalBuffer:
                     json.dumps(event["bbox"]),
                     event.get("frames_validated", 1),
                     event.get("snapshot_base64"),
+                    event.get("video_base64"),
                     event["timestamp"],
+                    0 if wait_for_video else 1,
+                    0 if wait_for_video else 1,
                 ),
             )
             self._conn.commit()
+            event_id = cursor.lastrowid
         logger.info(f"[{event['camera_id']}] Evento guardado localmente: {event['object_class']}")
+        return event_id
+
+    def attach_video(self, event_id: int, video_base64: str | None):
+        """Adjunta el clip y habilita la subida, incluso si el video falló."""
+        with self._lock:
+            self._conn.execute(
+                "UPDATE events SET video_base64 = ?, video_ready = 1, video_uploaded = ? WHERE id = ?",
+                (video_base64, 0 if video_base64 else 1, event_id),
+            )
+            self._conn.commit()
+        if video_base64:
+            logger.info("Video adjuntado al evento local #%s", event_id)
+        else:
+            logger.warning("Evento local #%s continuará sin video", event_id)
 
     def get_pending(self) -> list:
         with self._lock:
             cursor = self._conn.execute(
                 "SELECT id, camera_id, object_class, confidence, bbox, frames_validated, "
-                "snapshot_base64, timestamp FROM events WHERE uploaded = 0 ORDER BY id ASC"
+                "snapshot_base64, video_base64, timestamp FROM events "
+                "WHERE uploaded = 0 ORDER BY id ASC"
             )
             filas = cursor.fetchall()
 
@@ -86,14 +131,36 @@ class LocalBuffer:
                 "bbox": json.loads(fila[4]),
                 "frames_validated": fila[5],
                 "snapshot_base64": fila[6],
-                "timestamp": fila[7],
+                "video_base64": fila[7],
+                "timestamp": fila[8],
             }
             for fila in filas
         ]
 
-    def mark_uploaded(self, event_id: int):
+    def mark_uploaded(self, event_id: int, remote_event_id: int | None = None):
         with self._lock:
-            self._conn.execute("UPDATE events SET uploaded = 1 WHERE id = ?", (event_id,))
+            self._conn.execute(
+                "UPDATE events SET uploaded = 1, remote_event_id = COALESCE(?, remote_event_id) WHERE id = ?",
+                (remote_event_id, event_id),
+            )
+            self._conn.commit()
+
+    def get_pending_videos(self) -> list:
+        with self._lock:
+            filas = self._conn.execute(
+                "SELECT id, remote_event_id, camera_id, video_base64 FROM events "
+                "WHERE uploaded = 1 AND remote_event_id IS NOT NULL "
+                "AND video_ready = 1 AND video_uploaded = 0 AND video_base64 IS NOT NULL "
+                "ORDER BY id ASC"
+            ).fetchall()
+        return [
+            {"id": fila[0], "remote_event_id": fila[1], "camera_id": fila[2], "video_base64": fila[3]}
+            for fila in filas
+        ]
+
+    def mark_video_uploaded(self, event_id: int):
+        with self._lock:
+            self._conn.execute("UPDATE events SET video_uploaded = 1 WHERE id = ?", (event_id,))
             self._conn.commit()
 
     def limpiar_antiguos(self, dias: int = 7) -> int:
@@ -105,7 +172,8 @@ class LocalBuffer:
         Devuelve la cantidad de filas borradas."""
         with self._lock:
             cursor = self._conn.execute(
-                "DELETE FROM events WHERE uploaded = 1 AND created_at < datetime('now', ?)",
+                "DELETE FROM events WHERE uploaded = 1 AND video_uploaded = 1 "
+                "AND created_at < datetime('now', ?)",
                 (f"-{dias} days",),
             )
             borrados = cursor.rowcount

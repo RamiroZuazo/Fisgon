@@ -27,6 +27,7 @@ from dotenv import load_dotenv
 from capture.camera_manager import CameraManager
 from events.event_validator import EventValidator
 from events.local_buffer import LocalBuffer
+from events.video_clip_manager import VideoClipManager
 from inference.inference_worker import InferenceWorker
 from inference.model_loader import cargar_modelo
 from upload.upload_worker import UploadWorker
@@ -85,7 +86,19 @@ def main():
     buffer = LocalBuffer("eventos.db")
     upload_worker = UploadWorker(buffer, config)
 
-    validador = EventValidator(config, on_event_confirmed=buffer.save_pending)
+    clip_manager = VideoClipManager(config)
+
+    def guardar_evento_y_generar_clip(payload: dict):
+        detection_timestamp = payload.pop("detection_monotonic")
+        event_id = buffer.save_pending(payload, wait_for_video=clip_manager.enabled)
+        if clip_manager.enabled:
+            clip_manager.request_clip(
+                payload["camera_id"],
+                detection_timestamp,
+                lambda video, local_id=event_id: buffer.attach_video(local_id, video),
+            )
+
+    validador = EventValidator(config, on_event_confirmed=guardar_evento_y_generar_clip)
 
     inference_worker = InferenceWorker(
         frame_queue=frame_queue,
@@ -94,7 +107,11 @@ def main():
         on_detection=validador.procesar_deteccion,
     )
 
-    camera_manager = CameraManager(config, frame_queue=frame_queue)
+    camera_manager = CameraManager(
+        config,
+        frame_queue=frame_queue,
+        on_video_frame=clip_manager.add_frame,
+    )
 
     stop_event_principal = threading.Event()
 
@@ -126,6 +143,8 @@ def main():
         camera_manager.stop_all()
         logger.info("Deteniendo worker de inferencia...")
         inference_worker.stop()
+        logger.info("Deteniendo generador de clips...")
+        clip_manager.stop()
         logger.info("Deteniendo worker de subida...")
         upload_worker.stop()
         buffer.close()

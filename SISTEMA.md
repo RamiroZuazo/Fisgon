@@ -63,10 +63,12 @@ Dentro de main.py:
           events/event_validator.py
           - exige N detecciones en una ventana de tiempo antes
             de confirmar (evita falsos positivos de 1 frame)
-                          │
+                          ├────────► events/video_clip_manager.py
+                          │          - buffer circular por cámara
+                          │          - WebM: 10s antes + 10s después
                           ▼
           events/local_buffer.py (SQLite: eventos.db)
-          - persiste el evento localmente ANTES de intentar subirlo
+          - persiste el evento y video ANTES de intentar subirlos
                           │
                           ▼
           upload/upload_worker.py (1 thread propio)
@@ -164,12 +166,30 @@ de que `upload_worker` confirma el POST. Tiene `limpiar_antiguos()`
 (agregado para 24/7, ver sección 7) que borra eventos ya subidos con más
 de 7 días, sin tocar nunca los pendientes sin importar su antigüedad.
 
+El evento y su snapshot se suben inmediatamente para no demorar la alerta.
+El buffer guarda por separado el identificador remoto y el estado del video;
+cuando el WebM queda listo, `upload_worker` lo adjunta al mismo evento mediante
+un segundo request. El evento y los clips ya terminados sobreviven reinicios y
+se reintentan; si el proceso se corta durante los 10 segundos posteriores, el
+evento continúa sin video porque esos frames en memoria ya no pueden recuperarse.
+
+### `events/video_clip_manager.py`
+Mantiene un buffer circular JPEG independiente por cámara. Por defecto guarda
+5 fps con un ancho máximo de 960 px para limitar memoria y tamaño de subida.
+Cuando se confirma un evento, espera 10 segundos sin bloquear captura ni
+inferencia, toma los 10 segundos anteriores y los 10 posteriores y los
+codifica como WebM/VP8 en un thread separado, compatible con navegadores modernos. Se configura en
+`cameras.yaml` bajo `event_video:` y puede desactivarse desde la interfaz local.
+
 ### `upload/upload_worker.py`
 Thread separado. Cada `poll_interval_seconds` revisa el buffer local y
 hace `POST {api_url}/events` con el payload de cada evento pendiente,
 usando el header `X-Edge-Token` (no `Authorization: Bearer`, así lo
 define la API real). Si falla, deja el evento pendiente y reintenta en el
 próximo ciclo — nunca lo descarta.
+
+Después del alta inmediata del evento, el clip se envía a
+`POST /events/{id}/video` cuando queda disponible.
 
 Tiene una función `_asegurar_https()` que fuerza `https://` si alguien
 pone `http://` en la config (ver sección 5, bug real que costó horas
