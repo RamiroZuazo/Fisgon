@@ -56,6 +56,7 @@ ENV_EDGE_TOKEN = "FISGON_EDGE_TOKEN"
 DEFAULT_CONFIG = {
     "inference": {"model_path": "models/best.onnx", "confidence": 0.5, "iou": 0.45, "inference_fps": 5},
     "event_validation": {"min_consecutive_detections": 3, "window_seconds": 5},
+    "event_video": {"enabled": True, "seconds_before": 10, "seconds_after": 10, "fps": 5, "max_width": 960},
     "api": {"base_url": ""},
     "cameras": [],
 }
@@ -340,6 +341,7 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
 
     inference = config.get("inference", {})
     ev = config.get("event_validation", {})
+    video = config.get("event_video", {})
     # La URL y el token no salen de cameras.yaml sino de .env, que es donde
     # los guarda esta misma pantalla.
     env = leer_env()
@@ -408,6 +410,20 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
                         <input type="number" name="min_consecutive_detections" value="{ev.get("min_consecutive_detections", 3)}"></label>
                     <label>Ventana de tiempo (segundos):
                         <input type="number" name="window_seconds" value="{ev.get("window_seconds", 5)}"></label>
+
+                    <h3>Video del evento</h3>
+                    <label class="check-inline">
+                        <input type="checkbox" name="video_enabled" {"checked" if video.get("enabled", True) else ""}>
+                        Adjuntar video a cada evento
+                    </label>
+                    <label>Segundos de video anteriores:
+                        <input type="number" min="0" name="video_seconds_before" value="{video.get("seconds_before", 10)}"></label>
+                    <label>Segundos de video posteriores:
+                        <input type="number" min="0" name="video_seconds_after" value="{video.get("seconds_after", 10)}"></label>
+                    <label>FPS del video:
+                        <input type="number" min="1" name="video_fps" value="{video.get("fps", 5)}"></label>
+                    <label>Ancho máximo del video:
+                        <input type="number" min="160" name="video_max_width" value="{video.get("max_width", 960)}"></label>
                 </div>
                 <div class="ajustes-col">
                     <h3>API en la nube</h3>
@@ -713,11 +729,17 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
         config = cargar_config()
         config.setdefault("inference", {})
         config.setdefault("event_validation", {})
+        config.setdefault("event_video", {})
         config["inference"]["confidence"] = float(form.get("confidence", 0.5))
         config["inference"]["iou"] = float(form.get("iou", 0.45))
         config["inference"]["inference_fps"] = int(form.get("inference_fps", 5))
         config["event_validation"]["min_consecutive_detections"] = int(form.get("min_consecutive_detections", 3))
         config["event_validation"]["window_seconds"] = int(form.get("window_seconds", 5))
+        config["event_video"]["enabled"] = form.get("video_enabled") == "on"
+        config["event_video"]["seconds_before"] = int(form.get("video_seconds_before", 10))
+        config["event_video"]["seconds_after"] = int(form.get("video_seconds_after", 10))
+        config["event_video"]["fps"] = int(form.get("video_fps", 5))
+        config["event_video"]["max_width"] = int(form.get("video_max_width", 960))
         guardar_config(config)
         # La URL y el token van al .env aparte: no se tocan en cameras.yaml.
         guardar_env({

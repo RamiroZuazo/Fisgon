@@ -34,6 +34,7 @@ a.cancelar:hover { text-decoration: underline; }
 .ajustes-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: start; }
 .ajustes-col { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
 .ajustes-col h3 { margin: 0; font-size: 0.95rem; border-bottom: 1px solid #ddd; padding-bottom: 0.4rem; }
+.ajustes-col h3:not(:first-child) { margin-top: 0.8rem; }
 .ajustes-col input[type="text"], .ajustes-col input[type="password"] { width: 100%; }
 .ajustes-col .ayuda { margin: 0.2rem 0 0; line-height: 1.4; }
 .ajustes-col code { font-size: 0.75rem; background: #f0f0f0; padding: 0 0.2rem; }

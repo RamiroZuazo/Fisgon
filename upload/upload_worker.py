@@ -104,6 +104,7 @@ class UploadWorker:
         while not self._stop_event.is_set():
             try:
                 self._subir_pendientes()
+                self._subir_videos_pendientes()
             except Exception:
                 logger.exception("Error revisando/subiendo eventos pendientes")
             try:
@@ -133,10 +134,11 @@ class UploadWorker:
 
         logger.info(f"Subiendo {len(pendientes)} evento(s) pendiente(s)")
         for evento in pendientes:
-            if self._subir_evento(evento):
-                self.local_buffer.mark_uploaded(evento["id"])
+            remote_event_id = self._subir_evento(evento)
+            if remote_event_id is not None:
+                self.local_buffer.mark_uploaded(evento["id"], remote_event_id)
 
-    def _subir_evento(self, evento: dict) -> bool:
+    def _subir_evento(self, evento: dict) -> int | None:
         headers = {"X-Edge-Token": self.edge_token} if self.edge_token else {}
         # Contrato confirmado contra la API real: solo estos campos, "bbox"
         # como {x, y, width, height} (ya viene así de event_validator), y sin
@@ -160,15 +162,46 @@ class UploadWorker:
             )
         except requests.RequestException as e:
             logger.warning(f"[{evento['camera_id']}] No se pudo subir evento #{evento['id']}: {e}")
-            return False
+            return None
 
         if 200 <= resp.status_code < 300:
             logger.info(f"[{evento['camera_id']}] Evento #{evento['id']} subido")
-            return True
+            try:
+                return int(resp.json()["id"])
+            except (KeyError, TypeError, ValueError):
+                logger.error("La API creó el evento pero no devolvió un id válido")
+                return None
 
         logger.warning(
             f"[{evento['camera_id']}] Evento #{evento['id']} rechazado por la API "
             f"({resp.status_code}): {resp.text[:200]}"
+        )
+        return None
+
+    def _subir_videos_pendientes(self):
+        for item in self.local_buffer.get_pending_videos():
+            if self._subir_video(item):
+                self.local_buffer.mark_video_uploaded(item["id"])
+
+    def _subir_video(self, item: dict) -> bool:
+        headers = {"X-Edge-Token": self.edge_token} if self.edge_token else {}
+        try:
+            resp = requests.post(
+                f"{self.base_url}/events/{item['remote_event_id']}/video",
+                json={"video_base64": item["video_base64"]},
+                headers=headers,
+                timeout=max(DEFAULT_TIMEOUT, 30),
+            )
+        except requests.RequestException as exc:
+            logger.warning("[%s] No se pudo subir el video del evento #%s: %s", item["camera_id"], item["id"], exc)
+            return False
+
+        if 200 <= resp.status_code < 300:
+            logger.info("[%s] Video del evento #%s subido", item["camera_id"], item["id"])
+            return True
+        logger.warning(
+            "[%s] Video del evento #%s rechazado por la API (%s): %s",
+            item["camera_id"], item["id"], resp.status_code, resp.text[:200],
         )
         return False
 

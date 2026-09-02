@@ -34,7 +34,7 @@ logger = logging.getLogger("camera_manager")
 
 
 class CameraManager:
-    def __init__(self, config: dict, frame_queue):
+    def __init__(self, config: dict, frame_queue, on_video_frame=None):
         """
         config: dict ya cargado de cameras.yaml (secciones "cameras" e "inference").
         frame_queue: Queue compartida donde CameraSource encola frames.
@@ -54,6 +54,7 @@ class CameraManager:
                 frame_queue=frame_queue,
                 inference_fps=inference_fps,
                 motion_config=motion_config,
+                on_video_frame=on_video_frame,
             )
 
         if not self._sources:

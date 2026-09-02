@@ -51,13 +51,14 @@ MOTION_DIFF_SIZE = (160, 90)
 
 class CameraSource:
     def __init__(self, camera_id: str, rtsp_url: str, frame_queue, inference_fps: int = INFERENCE_FPS,
-                 motion_config: dict = None):
+                 motion_config: dict = None, on_video_frame=None):
         self.camera_id = camera_id
         self.rtsp_url = rtsp_url
         self.frame_queue = frame_queue
         self.inference_fps = inference_fps
         self.min_interval_activo = 1.0 / inference_fps  # segundos mínimos entre frames encolados a ritmo normal
         self.motion_config = {**DEFAULT_MOTION_CONFIG, **(motion_config or {})}
+        self.on_video_frame = on_video_frame
         self.min_interval_reposo = 1.0 / max(self.motion_config["floor_fps"], 0.001)
 
         self._thread = None
@@ -111,6 +112,12 @@ class CameraSource:
                     break
 
                 now = time.monotonic()
+
+                if self.on_video_frame is not None:
+                    try:
+                        self.on_video_frame(self.camera_id, frame, now)
+                    except Exception:
+                        logger.exception(f"[{self.camera_id}] Error guardando frame para video")
 
                 if self.motion_config["enabled"]:
                     # El diff se recalcula al ritmo "activo" (barato, unos
