@@ -14,3 +14,6 @@ config_ui/auth_store.json
 
 # Otros
 *.log
+
+# Señal de reinicio del pipeline (efímera, la crea la UI y la borra run.py)
+.reiniciar_pipeline

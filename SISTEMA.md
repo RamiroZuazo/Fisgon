@@ -175,10 +175,16 @@ Tiene una función `_asegurar_https()` que fuerza `https://` si alguien
 pone `http://` en la config (ver sección 5, bug real que costó horas
 diagnosticar). También corre `limpiar_antiguos()` una vez por día.
 
-La URL de la API y el token salen de variables de entorno (`.env`, vía
-`python-dotenv`, cargado en `main.py`): `FISGON_API_URL` y
-`FISGON_EDGE_TOKEN`. Si no hay `.env`, usa `api.base_url` de
-`cameras.yaml` como respaldo (útil para pruebas locales).
+La URL de la API y el token salen de `FISGON_API_URL` y
+`FISGON_EDGE_TOKEN` (`.env`, vía `python-dotenv`, cargado en `main.py`).
+Son credenciales y `cameras.yaml` está trackeado en git, así que `.env` es
+el único lugar donde viven. La interfaz web edita ese mismo `.env` desde la
+columna "API en la nube" de Ajustes, con escritura a temporal + rename para
+no dejarlo a medias, conservando comentarios y otras claves.
+
+`api.base_url` de `cameras.yaml` se sigue leyendo como respaldo para
+instalaciones viejas que lo tengan cargado; el token nunca se lee del YAML.
+En el log queda asentado de qué origen salió la URL (nunca el token en sí).
 
 ### `config_ui/app.py`
 Interfaz web local (`localhost:8000`) para editar `cameras.yaml` y ver el

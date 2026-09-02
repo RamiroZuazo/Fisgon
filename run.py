@@ -4,10 +4,15 @@ Levanta todo el sistema edge con un solo comando: el pipeline principal
 (main.py: cámaras + inferencia + eventos + subida) y la interfaz web de
 configuración (config_ui/app.py, http://localhost:8000).
 
-Corren como dos procesos separados a propósito (ver CONTEXT.md: config_ui no
-sincroniza en caliente con el pipeline — los cambios a cameras.yaml se
-aplican recién cuando se reinicia), pero este script los levanta y los
+Corren como dos procesos separados a propósito (config_ui no sincroniza en
+caliente con el pipeline: los cambios a cameras.yaml se aplican recién
+cuando main.py vuelve a arrancar), pero este script los levanta y los
 cierra juntos para no tener que abrir dos terminales.
+
+Reinicio automático al guardar: cuando se guarda un cambio en la interfaz
+web, config_ui deja el archivo .reiniciar_pipeline y este script reinicia
+main.py solo (la interfaz sigue arriba, no se corta la sesión), de modo que
+la configuración nueva se aplique sin tener que reiniciar a mano.
 
 Watchdog: pensado para correr 24/7 sin supervisión. Si cualquiera de los dos
 procesos se cae solo (crash, excepción no capturada, driver que se cuelga),
@@ -46,6 +51,12 @@ REINICIO_DELAY_SEGUNDOS = 5
 MAX_REINICIOS_EN_VENTANA = 5
 VENTANA_REINICIOS_SEGUNDOS = 600  # 10 minutos
 
+# Señal que deja config_ui al guardar un cambio de configuración.
+FLAG_REINICIO = ROOT / ".reiniciar_pipeline"
+# Se espera a que la señal deje de moverse antes de actuar, para que varios
+# guardados seguidos (cargar tres cámaras) den un solo reinicio y no tres.
+REINICIO_DEBOUNCE_SEGUNDOS = 2
+
 
 def parsear_args():
     parser = argparse.ArgumentParser(description="Levanta el pipeline edge + la interfaz web de configuración")
@@ -74,6 +85,15 @@ def _reenviar_salida(proceso: subprocess.Popen, prefijo: str):
         if not linea:
             break
         print(f"[{prefijo}] {linea}", end="")
+
+
+def _reinicio_pedido() -> bool:
+    """True si la interfaz pidió un reinicio y ya pasó el tiempo de calma."""
+    try:
+        antiguedad = time.time() - FLAG_REINICIO.stat().st_mtime
+    except OSError:
+        return False  # no existe, o desapareció entre el stat y ahora
+    return antiguedad >= REINICIO_DEBOUNCE_SEGUNDOS
 
 
 def _detener(procesos: dict):
@@ -105,6 +125,27 @@ def main():
         procesos[nombre] = proc
         threading.Thread(target=_reenviar_salida, args=(proc, nombre), daemon=True).start()
 
+    def reiniciar_pipeline():
+        """Baja y vuelve a levantar main.py para que tome la config nueva.
+
+        No cuenta contra el presupuesto de reintentos por crash: esto es un
+        reinicio pedido a propósito, no un proceso que se está cayendo.
+        """
+        proc = procesos["pipeline"]
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                print("[run] pipeline no cerró a tiempo, forzando...")
+                proc.kill()
+                proc.wait()
+        lanzar_y_seguir("pipeline")
+
+    # Una señal que haya quedado de una corrida anterior no aplica a esta:
+    # el pipeline está por arrancar y ya va a leer la config actual.
+    FLAG_REINICIO.unlink(missing_ok=True)
+
     for nombre in especificaciones:
         lanzar_y_seguir(nombre)
 
@@ -118,6 +159,16 @@ def main():
     try:
         while not detener_todo:
             time.sleep(CHEQUEO_INTERVALO_SEGUNDOS)
+
+            # Se atiende antes que la detección de caídas: al reiniciar acá
+            # queda un proceso vivo en procesos["pipeline"], así que el
+            # chequeo de abajo no lo confunde con un crash.
+            if _reinicio_pedido():
+                FLAG_REINICIO.unlink(missing_ok=True)
+                print("[run] Cambio guardado en la interfaz — reiniciando el pipeline para aplicarlo...")
+                reiniciar_pipeline()
+                print("[run] Pipeline reiniciado con la configuración nueva.")
+
             for nombre in list(especificaciones):
                 proc = procesos[nombre]
                 if proc.poll() is None:

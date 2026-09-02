@@ -93,6 +93,10 @@ edge específico frente a la API. **Nunca** los pongas en `cameras.yaml` ni
 en el código: `.env` es el único lugar donde deben vivir (ver
 `upload/upload_worker.py` para el detalle de cómo se usan).
 
+También se pueden cargar desde la interfaz web (Ajustes → "API en la nube"),
+que escribe en este mismo `.env` y reinicia el pipeline para aplicarlo — útil
+para no editar el archivo a mano en la máquina del cliente.
+
 ## 6. Configurar las cámaras (`cameras.yaml`)
 
 Opción A — a mano: editá `cameras.yaml` con la URL RTSP real de cada

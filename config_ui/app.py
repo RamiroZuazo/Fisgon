@@ -42,6 +42,16 @@ import yaml
 CONFIG_PATH = Path(__file__).parent.parent / "cameras.yaml"
 STATIC_DIR = Path(__file__).parent / "static"
 AUTH_STORE_PATH = Path(__file__).parent / "auth_store.json"
+# Señal en disco para que run.py reinicie el pipeline: se crea cada vez que
+# se guarda un cambio de configuración (ver _pedir_reinicio_pipeline).
+RESTART_FLAG_PATH = Path(__file__).parent.parent / ".reiniciar_pipeline"
+
+# Las credenciales de la API viven en .env, nunca en cameras.yaml: ese archivo
+# está trackeado en git y un token cargado ahí terminaría commiteado. .env está
+# en .gitignore, así que es el único lugar donde deben vivir (ver INSTALACION.md).
+ENV_PATH = Path(__file__).parent.parent / ".env"
+ENV_API_URL = "FISGON_API_URL"
+ENV_EDGE_TOKEN = "FISGON_EDGE_TOKEN"
 
 DEFAULT_CONFIG = {
     "inference": {"model_path": "models/best.onnx", "confidence": 0.5, "iou": 0.45, "inference_fps": 5},
@@ -71,9 +81,91 @@ def cargar_config() -> dict:
         return yaml.safe_load(f) or DEFAULT_CONFIG
 
 
+def _pedir_reinicio_pipeline():
+    """Deja la señal que run.py vigila para reiniciar el pipeline.
+
+    El pipeline lee cameras.yaml solo al arrancar, así que un cambio guardado
+    acá recién se aplica cuando main.py vuelve a levantar. No se reinicia
+    desde este proceso porque la UI no es dueña del pipeline: quien lo
+    supervisa es run.py. Si la UI corre sola, el archivo queda sin efecto y
+    el próximo run.py lo descarta al arrancar.
+    """
+    try:
+        RESTART_FLAG_PATH.write_text("", encoding="utf-8")
+    except OSError as e:
+        print(f"[config_ui] No se pudo pedir el reinicio del pipeline: {e}")
+
+
 def guardar_config(config: dict):
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         yaml.safe_dump(config, f, allow_unicode=True, sort_keys=False)
+    # Todo cambio de config (cámaras y ajustes) pasa por acá, así que este es
+    # el único lugar donde hace falta pedir el reinicio.
+    _pedir_reinicio_pipeline()
+
+
+def leer_env() -> dict:
+    """Lee .env como pares clave/valor, para poblar el formulario.
+
+    No se usa python-dotenv acá para no sumarle esa dependencia a la interfaz:
+    el archivo que escribimos es siempre KEY=valor en una línea. Se toleran
+    comillas por si alguien lo editó a mano.
+    """
+    valores = {}
+    if not ENV_PATH.exists():
+        return valores
+    for linea in ENV_PATH.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, _, valor = linea.partition("=")
+        valores[clave.strip()] = valor.strip().strip('"').strip("'")
+    return valores
+
+
+def _valor_env_limpio(valor: str) -> str:
+    """Una sola línea y sin espacios al borde: un salto de línea pegado por
+    accidente partiría el archivo y todo lo que siguiera quedaría fuera del
+    valor."""
+    valor = valor.strip()
+    return valor.splitlines()[0].strip() if valor else ""
+
+
+def guardar_env(cambios: dict):
+    """Actualiza claves en .env conservando el resto del archivo.
+
+    Se reescriben solo las líneas de las claves pedidas: los comentarios, el
+    orden y cualquier otra variable que haya quedan intactos. La escritura va a
+    un temporal que después se renombra, para no dejar el .env a medias (y sin
+    credenciales) si el proceso muere en el medio.
+    """
+    cambios = {clave: _valor_env_limpio(valor) for clave, valor in cambios.items()}
+
+    lineas, fin_de_linea = [], "\n"
+    if ENV_PATH.exists():
+        contenido = ENV_PATH.read_text(encoding="utf-8")
+        fin_de_linea = "\r\n" if "\r\n" in contenido else "\n"
+        lineas = contenido.splitlines()
+
+    pendientes = dict(cambios)
+    salida = []
+    for linea in lineas:
+        despojada = linea.strip()
+        clave = despojada.partition("=")[0].strip()
+        if not despojada.startswith("#") and "=" in despojada and clave in pendientes:
+            salida.append(f"{clave}={pendientes.pop(clave)}")
+        else:
+            salida.append(linea)
+    # Claves que todavía no estaban en el archivo (ej. un .env recién creado).
+    salida.extend(f"{clave}={valor}" for clave, valor in pendientes.items())
+
+    temporal = ENV_PATH.parent / ".env.tmp"
+    temporal.write_text(fin_de_linea.join(salida) + fin_de_linea, encoding="utf-8", newline="")
+    os.replace(temporal, ENV_PATH)
+
+    # main.py lee .env recién al arrancar, así que esto no aplica hasta que el
+    # pipeline se reinicie.
+    _pedir_reinicio_pipeline()
 
 
 def _resolver_fuente_test(rtsp_url: str):
@@ -184,7 +276,8 @@ def render_login(error: str = None) -> str:
 </html>"""
 
 
-def render_index(config: dict, editar_id: str = None, error_camara: str = None, form_valores: dict = None) -> str:
+def render_index(config: dict, editar_id: str = None, error_camara: str = None, form_valores: dict = None,
+                 reiniciando: bool = False) -> str:
     filas = ""
     for cam in config.get("cameras", []):
         cam_id_raw = str(cam.get("id", ""))
@@ -240,10 +333,16 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
     rtsp_value_alta = form_valores.get("rtsp_url", "") if form_valores else ""
     active_checked_alta = (form_valores.get("active") == "on") if form_valores else True
     error_camara_html = f'<p class="form-error">{html.escape(error_camara)}</p>' if error_camara else ""
+    reinicio_html = (
+        '<p class="form-ok">Cambios guardados. Reiniciando el pipeline para aplicarlos...</p>'
+        if reiniciando else ""
+    )
 
     inference = config.get("inference", {})
     ev = config.get("event_validation", {})
-    api = config.get("api", {})
+    # La URL y el token no salen de cameras.yaml sino de .env, que es donde
+    # los guarda esta misma pantalla.
+    env = leer_env()
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -260,7 +359,8 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
             <a href="/logout" class="cerrar-sesion">Cerrar sesión</a>
         </div>
     </div>
-    <p class="nota">Los cambios se aplican reiniciando <code>main.py</code>.</p>
+    <p class="nota">Al guardar un cambio, el pipeline (<code>main.py</code>) se reinicia solo para aplicarlo.</p>
+    {reinicio_html}
 
     <section>
         <h2>Cámaras</h2>
@@ -293,25 +393,49 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
     </section>
 
     <section>
-        <h2>Ajustes de inferencia y eventos</h2>
-        <form method="post" action="/ajustes/guardar">
-            <label>Confianza mínima:
-                <input type="number" step="0.01" name="confidence" value="{inference.get("confidence", 0.5)}"></label>
-            <label>IOU:
-                <input type="number" step="0.01" name="iou" value="{inference.get("iou", 0.45)}"></label>
-            <label>FPS de inferencia por cámara:
-                <input type="number" name="inference_fps" value="{inference.get("inference_fps", 5)}"></label>
-            <label>Detecciones consecutivas para confirmar evento:
-                <input type="number" name="min_consecutive_detections" value="{ev.get("min_consecutive_detections", 3)}"></label>
-            <label>Ventana de tiempo (segundos):
-                <input type="number" name="window_seconds" value="{ev.get("window_seconds", 5)}"></label>
-            <label>URL base de la API en la nube:
-                <input type="text" name="api_base_url" value="{html.escape(str(api.get("base_url", "")))}" size="50"></label>
+        <h2>Ajustes</h2>
+        <form method="post" action="/ajustes/guardar" class="form-ajustes">
+            <div class="ajustes-grid">
+                <div class="ajustes-col">
+                    <h3>Inferencia y eventos</h3>
+                    <label>Confianza mínima:
+                        <input type="number" step="0.01" name="confidence" value="{inference.get("confidence", 0.5)}"></label>
+                    <label>IOU:
+                        <input type="number" step="0.01" name="iou" value="{inference.get("iou", 0.45)}"></label>
+                    <label>FPS de inferencia por cámara:
+                        <input type="number" name="inference_fps" value="{inference.get("inference_fps", 5)}"></label>
+                    <label>Detecciones consecutivas para confirmar evento:
+                        <input type="number" name="min_consecutive_detections" value="{ev.get("min_consecutive_detections", 3)}"></label>
+                    <label>Ventana de tiempo (segundos):
+                        <input type="number" name="window_seconds" value="{ev.get("window_seconds", 5)}"></label>
+                </div>
+                <div class="ajustes-col">
+                    <h3>API en la nube</h3>
+                    <label>URL base:
+                        <input type="text" name="api_base_url" placeholder="https://tu-api.railway.app"
+                            value="{html.escape(env.get(ENV_API_URL, ""))}"></label>
+                    <label>Token del edge:
+                        <input type="password" id="api-token" name="api_token" autocomplete="off"
+                            placeholder="token de este edge"
+                            value="{html.escape(env.get(ENV_EDGE_TOKEN, ""))}"></label>
+                    <label class="check-inline">
+                        <input type="checkbox" onclick="alternarToken(this)"> Mostrar token
+                    </label>
+                    <p class="ayuda">El token se manda en el header <code>X-Edge-Token</code> al subir
+                        eventos. Estos dos campos se guardan en el archivo <code>.env</code>
+                        (<code>FISGON_API_URL</code> y <code>FISGON_EDGE_TOKEN</code>), no en
+                        <code>cameras.yaml</code>: son credenciales y <code>.env</code> no se sube a git.</p>
+                </div>
+            </div>
             <button type="submit">Guardar ajustes</button>
         </form>
     </section>
 
     <script>
+        function alternarToken(checkbox) {{
+            document.getElementById("api-token").type = checkbox.checked ? "text" : "password";
+        }}
+
         async function probarConexion(url, boton) {{
             const span = boton.parentElement.querySelector('.resultado');
             span.textContent = "Probando...";
@@ -461,7 +585,8 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
         if ruta == "/":
             query = parse_qs(urlparse(self.path).query)
             editar_id = query.get("editar", [None])[0]
-            self._send_html(render_index(cargar_config(), editar_id=editar_id))
+            reiniciando = query.get("reiniciando", [""])[0] == "1"
+            self._send_html(render_index(cargar_config(), editar_id=editar_id, reiniciando=reiniciando))
         elif ruta == "/perfil":
             self._send_html(render_perfil())
         else:
@@ -488,19 +613,19 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
             if error:
                 self._send_html(render_index(cargar_config(), error_camara=error, form_valores=form), status=400)
             else:
-                self._redirect("/")
+                self._redirect("/?reiniciando=1")
         elif ruta == "/camaras/editar":
             error = self._editar_camara(form)
             if error:
                 self._send_html(render_index(cargar_config(), error_camara=error), status=400)
             else:
-                self._redirect("/")
+                self._redirect("/?reiniciando=1")
         elif ruta == "/camaras/eliminar":
             self._eliminar_camara(form)
-            self._redirect("/")
+            self._redirect("/?reiniciando=1")
         elif ruta == "/ajustes/guardar":
             self._guardar_ajustes(form)
-            self._redirect("/")
+            self._redirect("/?reiniciando=1")
         elif ruta == "/camaras/probar":
             self._probar_conexion(form)
         elif ruta == "/perfil/cambiar_contrasena":
@@ -593,8 +718,12 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
         config["inference"]["inference_fps"] = int(form.get("inference_fps", 5))
         config["event_validation"]["min_consecutive_detections"] = int(form.get("min_consecutive_detections", 3))
         config["event_validation"]["window_seconds"] = int(form.get("window_seconds", 5))
-        config.setdefault("api", {})["base_url"] = form.get("api_base_url", "")
         guardar_config(config)
+        # La URL y el token van al .env aparte: no se tocan en cameras.yaml.
+        guardar_env({
+            ENV_API_URL: form.get("api_base_url", ""),
+            ENV_EDGE_TOKEN: form.get("api_token", ""),
+        })
 
     def _probar_conexion(self, form: dict):
         """Intenta abrir el RTSP (o índice de webcam) brevemente y devuelve si conectó o no."""

@@ -47,13 +47,18 @@ Servidor FastAPI local (`localhost:8000`, corre aparte de `main.py`, no forma
 parte del pipeline) para editar `cameras.yaml` desde el navegador en vez de a
 mano. Permite agregar/editar/eliminar cámaras, ajustar `confidence`, `iou`,
 `inference_fps`, `min_consecutive_detections`, `window_seconds` y
-`api.base_url`, y tiene un botón "Probar conexión" por cámara que abre el
+`api.base_url`, cargar la URL y el token de la API (que se guardan en `.env`,
+no en `cameras.yaml`), y tiene un botón "Probar conexión" por cámara que abre el
 RTSP brevemente con `cv2.VideoCapture` (la misma librería que usa
 `camera_source.py`) para confirmar que conecta antes de guardar.
 
-Los cambios se aplican reiniciando `main.py` — no hay sincronización en
+Los cambios se aplican reiniciando `main.py`: no hay sincronización en
 caliente entre esta interfaz y el pipeline principal, por diseño (simplicidad
-para el alcance de la tesis).
+para el alcance de la tesis). Ese reinicio está automatizado — al guardar,
+`config_ui` deja el archivo `.reiniciar_pipeline` en la raíz y `run.py`, que
+supervisa ambos procesos, lo ve y reinicia solo `main.py` (la interfaz sigue
+arriba y la sesión no se corta). Si `config_ui` corre suelto, sin `run.py`,
+la señal no tiene efecto y el reinicio queda a mano como antes.
 
 ## Ya existe (código de referencia)
 

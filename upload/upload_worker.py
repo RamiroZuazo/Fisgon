@@ -9,12 +9,16 @@ falla (sin conexión, timeout, error 5xx) deja el evento como pendiente y lo
 reintenta en el próximo ciclo — nunca lo descarta.
 
 La URL de la API y el token de autenticación del edge salen de variables de
-entorno (se leen de un archivo .env vía python-dotenv, cargado en main.py):
-    FISGON_API_URL     — URL base de la API, ej. https://.../
+entorno (.env vía python-dotenv, cargado en main.py):
+    FISGON_API_URL      — URL base de la API, ej. https://.../
     FISGON_EDGE_TOKEN   — token de este edge, va en el header X-Edge-Token
 
-Si FISGON_API_URL no está seteada, se usa api.base_url de cameras.yaml como
-respaldo (útil para pruebas locales sin .env).
+Son credenciales, así que .env es el único lugar donde viven: cameras.yaml está
+trackeado en git y terminarían commiteadas. La interfaz web edita ese mismo .env
+(sección "API en la nube"), no hace falta abrirlo a mano.
+
+api.base_url de cameras.yaml se sigue leyendo como respaldo, solo para no romper
+instalaciones viejas que lo tengan cargado ahí; el token nunca se lee del YAML.
 
 Uso típico (ver main.py):
     from upload.upload_worker import UploadWorker
@@ -59,14 +63,25 @@ def _asegurar_https(url: str) -> str:
 class UploadWorker:
     def __init__(self, local_buffer, config: dict, poll_interval_seconds: int = DEFAULT_POLL_INTERVAL):
         self.local_buffer = local_buffer
-        base_url = os.environ.get("FISGON_API_URL") or config.get("api", {}).get("base_url", "")
-        self.base_url = _asegurar_https(base_url.rstrip("/"))
-        self.edge_token = os.environ.get("FISGON_EDGE_TOKEN")
+        base_url_env = os.environ.get("FISGON_API_URL", "").strip()
+        base_url_yaml = str((config.get("api") or {}).get("base_url") or "").strip()
+
+        self.base_url = _asegurar_https((base_url_env or base_url_yaml).rstrip("/"))
+        self.edge_token = os.environ.get("FISGON_EDGE_TOKEN", "").strip()
         self.poll_interval = poll_interval_seconds
 
-        if not self.base_url:
-            logger.warning("FISGON_API_URL / api.base_url no configurado — upload_worker no podrá subir eventos")
-        if not self.edge_token:
+        # Se deja asentado de dónde salió la URL: si quedó una vieja en el YAML,
+        # "lo cambié en la interfaz y sigue yendo a la otra" se responde mirando
+        # el log en vez de adivinando.
+        if self.base_url:
+            origen = ".env" if base_url_env else "cameras.yaml (respaldo)"
+            logger.info(f"API en {self.base_url} (configurada desde {origen})")
+        else:
+            logger.warning("FISGON_API_URL no configurado — upload_worker no podrá subir eventos")
+        if self.edge_token:
+            # Nunca el token en sí: los logs se comparten para depurar.
+            logger.info("Token del edge cargado desde .env")
+        else:
             logger.warning("FISGON_EDGE_TOKEN no configurado — se subirá sin autenticación")
 
         self._thread = None
