@@ -38,4 +38,4 @@ cameras:
 - id: cam_4
   name: Tiandy
   rtsp_url: rtsp://admin:Fisgon2026@192.168.100.31:554/profile1
-  active: false
+  active: true
