@@ -30,6 +30,7 @@ Uso:
 
 import argparse
 import os
+import signal
 import subprocess
 import sys
 import threading
@@ -66,9 +67,13 @@ def parsear_args():
 
 
 def _lanzar(cmd: list, cwd: Path) -> subprocess.Popen:
+    # Grupo de procesos propio: es lo que después permite señalizar al hijo y a
+    # todo lo que haya lanzado él, de una (ver _terminar).
+    banderas = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0
     return subprocess.Popen(
         cmd,
         cwd=str(cwd),
+        creationflags=banderas,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -96,17 +101,52 @@ def _reinicio_pedido() -> bool:
     return antiguedad >= REINICIO_DEBOUNCE_SEGUNDOS
 
 
+def _terminar(proc: subprocess.Popen, nombre: str, espera: int = 10):
+    """Baja el proceso y todo lo que cuelgue de él.
+
+    En Windows el python del venv es un stub que lanza el intérprete real como
+    proceso hijo. Un proc.terminate() mata solo al stub y deja al intérprete
+    corriendo huérfano: un pipeline fantasma que sigue subiendo eventos con la
+    configuración (y el token) que tenía cargados, en paralelo con el que se
+    acaba de levantar. Se ve en el log como líneas duplicadas y respuestas
+    contradictorias de la API para el mismo evento.
+
+    Por eso se señaliza al grupo entero con CTRL_BREAK, que Python recibe como
+    KeyboardInterrupt y deja cerrar la base y soltar las cámaras. Si algo queda
+    vivo igual, recién ahí se baja el árbol a la fuerza.
+    """
+    if proc.poll() is not None:
+        return
+
+    try:
+        if os.name == "nt":
+            proc.send_signal(signal.CTRL_BREAK_EVENT)
+        else:
+            proc.terminate()
+    except OSError:
+        pass  # ya se había muerto entre el poll y la señal
+
+    try:
+        proc.wait(timeout=espera)
+        return
+    except subprocess.TimeoutExpired:
+        print(f"[run] {nombre} no cerró a tiempo, forzando...")
+
+    if os.name == "nt":
+        # /T incluye a los descendientes, que es justamente lo que kill() no ve.
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        proc.kill()
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        print(f"[run] {nombre} sigue vivo después de forzar el cierre")
+
+
 def _detener(procesos: dict):
     print("\n[run] Deteniendo procesos...")
     for nombre, proc in procesos.items():
-        if proc.poll() is None:
-            proc.terminate()
-    for nombre, proc in procesos.items():
-        try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            print(f"[run] {nombre} no cerró a tiempo, forzando...")
-            proc.kill()
+        _terminar(proc, nombre)
     print("[run] Listo.")
 
 
@@ -131,15 +171,7 @@ def main():
         No cuenta contra el presupuesto de reintentos por crash: esto es un
         reinicio pedido a propósito, no un proceso que se está cayendo.
         """
-        proc = procesos["pipeline"]
-        if proc.poll() is None:
-            proc.terminate()
-            try:
-                proc.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                print("[run] pipeline no cerró a tiempo, forzando...")
-                proc.kill()
-                proc.wait()
+        _terminar(procesos["pipeline"], "pipeline")
         lanzar_y_seguir("pipeline")
 
     # Una señal que haya quedado de una corrida anterior no aplica a esta:
