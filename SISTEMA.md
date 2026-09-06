@@ -110,6 +110,13 @@ Lee `cameras.yaml`, crea una `CameraSource` por cada cámara con
 `active: true`, les pasa la configuración de movimiento e
 `inference_fps`, y expone `start_all()` / `stop_all()` / `get_status()`.
 
+Si el plan del cliente define un cupo (`max_cameras`, ver
+`upload/edge_config.py`), arranca solo las primeras N activas **en el orden
+del archivo** y deja las demás en `fuera_de_cupo`, con un WARNING que las
+nombra. El cupo se mide sobre las activas en config y no sobre las
+conectadas: si se contaran las conectadas, una cámara que se reconecta
+después de un corte quedaría adentro o afuera según quién gane la carrera.
+
 ### `inference/model_loader.py`
 Carga el modelo ONNX **una sola vez** (cacheado — nunca se recrea la
 sesión por cámara ni por frame). Reusa `activar_directml()` de
@@ -180,6 +187,29 @@ Cuando se confirma un evento, espera 10 segundos sin bloquear captura ni
 inferencia, toma los 10 segundos anteriores y los 10 posteriores y los
 codifica como WebM/VP8 en un thread separado, compatible con navegadores modernos. Se configura en
 `cameras.yaml` bajo `event_video:` y puede desactivarse desde la interfaz local.
+
+### `upload/edge_config.py`
+Consulta a la API cuántas cámaras activas permite el plan de este cliente:
+`GET /edge/config` con el header `X-Edge-Token`, que responde
+`{"max_cameras": N}`. El cupo no es un dato del edge sino del contrato del
+cliente, así que vive en el backend y viaja atado al token — cambiar el plan
+no requiere entrar a la máquina del cliente a editar un archivo.
+
+La respuesta se cachea en `.edge_config.json` (raíz, fuera de git). La
+política ante fallas es **fallar hacia abierto**: sin respuesta se usa el
+último cupo cacheado, y sin cache no se limita nada. Un problema de red no
+puede apagar cámaras — el riesgo de que un cliente corra dos de más durante
+un corte es menor que el de un sistema de vigilancia que se ciega solo.
+
+El `404` es un camino soportado a propósito: mientras la API no exponga el
+endpoint, el edge corre sin cupo y no se rompe. La barrera real es del lado
+servidor (rechazo de eventos de cámaras fuera de cupo); lo que hace el edge
+es no pasarse y avisar, porque corre en hardware del cliente y cualquier
+control local es evitable parcheando el código.
+
+Se consulta una vez por arranque del pipeline, desde `main.py`, antes de
+levantar las cámaras. Como el pipeline se reinicia con cada guardado de
+configuración, en la práctica se refresca seguido.
 
 ### `upload/upload_worker.py`
 Thread separado. Cada `poll_interval_seconds` revisa el buffer local y

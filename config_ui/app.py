@@ -30,6 +30,7 @@ import html
 import json
 import os
 import secrets
+import sys
 import time
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -38,6 +39,12 @@ from urllib.parse import parse_qs, urlparse
 
 import cv2
 import yaml
+
+# Permite importar upload.edge_config corriendo `python config_ui/app.py`
+# (mismo recurso que capture/camera_manager.py).
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from upload.edge_config import leer_cupo_cacheado
 
 CONFIG_PATH = Path(__file__).parent.parent / "cameras.yaml"
 STATIC_DIR = Path(__file__).parent / "static"
@@ -167,6 +174,38 @@ def guardar_env(cambios: dict):
     # main.py lee .env recién al arrancar, así que esto no aplica hasta que el
     # pipeline se reinicie.
     _pedir_reinicio_pipeline()
+
+
+def _estado_cupo(config: dict) -> dict:
+    """Cuántas cámaras activas hay y cuántas permite el plan.
+
+    El cupo se lee del cache que deja el pipeline en cada arranque: la
+    interfaz no consulta la API, así hay un solo lugar del código hablando con
+    la nube. `maximo` en None significa que todavía no se pudo averiguar, y
+    entonces no se limita nada.
+    """
+    activas = sum(1 for cam in config.get("cameras", []) if cam.get("active"))
+    return {"activas": activas, "maximo": leer_cupo_cacheado()}
+
+
+def _excede_cupo(config: dict, id_excluido: str = None) -> str:
+    """Mensaje de error si activar una cámara más se pasa del cupo, o None.
+
+    id_excluido es la cámara que se está editando: no se la cuenta dos veces.
+    """
+    cupo = leer_cupo_cacheado()
+    if cupo is None:
+        return None
+    activas = sum(
+        1 for cam in config.get("cameras", [])
+        if cam.get("active") and str(cam.get("id")) != id_excluido
+    )
+    if activas < cupo:
+        return None
+    return (
+        f"El plan de este edge permite {cupo} cámara(s) activa(s) y ya hay {activas}. "
+        f"Desactivá una para poder activar esta."
+    )
 
 
 def _resolver_fuente_test(rtsp_url: str):
@@ -327,6 +366,16 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
                     </td>
                 </tr>"""
 
+    cupo = _estado_cupo(config)
+    if cupo["maximo"] is None:
+        cupo_html = f'<p class="nota">{cupo["activas"]} cámara(s) activa(s).</p>'
+    else:
+        clase = "form-error" if cupo["activas"] > cupo["maximo"] else "nota"
+        cupo_html = (
+            f'<p class="{clase}">{cupo["activas"]} de {cupo["maximo"]} cámaras activas '
+            f'(cupo del plan contratado).</p>'
+        )
+
     # Formulario de alta (siempre vacío salvo que un submit haya fallado, en
     # cuyo caso se repueblan los valores enviados para no perderlos).
     id_value = form_valores.get("id", "") if form_valores else ""
@@ -366,6 +415,7 @@ def render_index(config: dict, editar_id: str = None, error_camara: str = None, 
 
     <section>
         <h2>Cámaras</h2>
+        {cupo_html}
         <table>
             <thead>
                 <tr>
@@ -698,6 +748,10 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
             return "El ID de la cámara no puede estar vacío."
         if any(str(c.get("id")) == cam_id for c in config["cameras"]):
             return f'Ya existe una cámara con el ID "{cam_id}". Elegí otro ID o usá "Editar" en la tabla.'
+        if active:
+            error_cupo = _excede_cupo(config)
+            if error_cupo:
+                return error_cupo
 
         config["cameras"].append({"id": cam_id, **datos})
         guardar_config(config)
@@ -714,6 +768,13 @@ class ConfigUIHandler(BaseHTTPRequestHandler):
         existentes = [c for c in config.get("cameras", []) if str(c.get("id")) == original_id]
         if not existentes:
             return "La cámara que intentás editar ya no existe."
+
+        # Solo se valida si esta cámara pasa de inactiva a activa: guardar una
+        # que ya estaba activa nunca puede empeorar el conteo.
+        if active and not existentes[0].get("active"):
+            error_cupo = _excede_cupo(config, id_excluido=original_id)
+            if error_cupo:
+                return error_cupo
 
         existentes[0].update(datos)
         guardar_config(config)

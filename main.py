@@ -25,6 +25,7 @@ import yaml
 from dotenv import load_dotenv
 
 from capture.camera_manager import CameraManager
+from upload.edge_config import cargar_cupo
 from events.event_validator import EventValidator
 from events.local_buffer import LocalBuffer
 from events.video_clip_manager import VideoClipManager
@@ -107,10 +108,19 @@ def main():
         on_detection=validador.procesar_deteccion,
     )
 
+    # Cuántas cámaras permite el plan de este cliente. Lo define la nube y
+    # viaja atado al token; si no se puede averiguar, no se limita nada.
+    cupo = cargar_cupo(config)
+    if cupo["max_cameras"] is None:
+        logger.warning("Sin cupo de cámaras conocido — se arrancan todas las activas")
+    else:
+        logger.info(f"Cupo del plan: {cupo['max_cameras']} cámara(s) activa(s), según {cupo['origen']}")
+
     camera_manager = CameraManager(
         config,
         frame_queue=frame_queue,
         on_video_frame=clip_manager.add_frame,
+        max_cameras=cupo["max_cameras"],
     )
 
     stop_event_principal = threading.Event()

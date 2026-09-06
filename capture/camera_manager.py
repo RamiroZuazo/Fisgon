@@ -6,6 +6,9 @@ Lee la lista de cámaras del YAML, crea un CameraSource por cada cámara con
 `active: true`, y las hace compartir la misma Queue de frames que después
 consume inference_worker.py.
 
+Si el plan del cliente define un cupo (`max_cameras`, ver upload/edge_config.py),
+arranca solo esa cantidad y deja las demás sin iniciar, avisando cuáles.
+
 Uso típico (ver main.py para el pipeline completo):
 
     from queue import Queue
@@ -34,20 +37,40 @@ logger = logging.getLogger("camera_manager")
 
 
 class CameraManager:
-    def __init__(self, config: dict, frame_queue, on_video_frame=None):
+    def __init__(self, config: dict, frame_queue, on_video_frame=None, max_cameras=None):
         """
         config: dict ya cargado de cameras.yaml (secciones "cameras" e "inference").
         frame_queue: Queue compartida donde CameraSource encola frames.
+        max_cameras: cupo del plan, o None para no limitar.
         """
         self.frame_queue = frame_queue
         inference_fps = config.get("inference", {}).get("inference_fps", INFERENCE_FPS)
         motion_config = config.get("motion_detection", {})
 
-        self._sources = {}
+        activas = []
         for cam_cfg in config.get("cameras", []):
             if not cam_cfg.get("active", False):
                 logger.info(f"[{cam_cfg.get('id')}] Inactiva en config, se omite")
                 continue
+            activas.append(cam_cfg)
+
+        # El cupo se mide sobre las activas en config, no sobre las que están
+        # conectadas: si se contaran las conectadas, una cámara que se reconecta
+        # después de un corte quedaría adentro o afuera según quién gane la
+        # carrera. Se recortan las últimas del archivo — determinístico, el
+        # mismo cameras.yaml arranca siempre las mismas cámaras.
+        self.fuera_de_cupo = []
+        if max_cameras is not None and len(activas) > max_cameras:
+            self.fuera_de_cupo = activas[max_cameras:]
+            ids = ", ".join(str(cam.get("id")) for cam in self.fuera_de_cupo)
+            logger.warning(
+                f"El plan permite {max_cameras} cámara(s) activa(s) y hay {len(activas)} "
+                f"en la configuración — no se arrancan: {ids}"
+            )
+            activas = activas[:max_cameras]
+
+        self._sources = {}
+        for cam_cfg in activas:
             self._sources[cam_cfg["id"]] = CameraSource(
                 camera_id=cam_cfg["id"],
                 rtsp_url=cam_cfg["rtsp_url"],

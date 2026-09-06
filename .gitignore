@@ -17,3 +17,6 @@ config_ui/auth_store.json
 
 # Señal de reinicio del pipeline (efímera, la crea la UI y la borra run.py)
 .reiniciar_pipeline
+
+# Cupo de cámaras cacheado desde la API (lo regenera el pipeline)
+.edge_config.json

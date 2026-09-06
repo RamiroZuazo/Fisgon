@@ -48,7 +48,8 @@ parte del pipeline) para editar `cameras.yaml` desde el navegador en vez de a
 mano. Permite agregar/editar/eliminar cámaras, ajustar `confidence`, `iou`,
 `inference_fps`, `min_consecutive_detections`, `window_seconds` y
 `api.base_url`, cargar la URL y el token de la API (que se guardan en `.env`,
-no en `cameras.yaml`), y tiene un botón "Probar conexión" por cámara que abre el
+no en `cameras.yaml`), muestra cuántas cámaras activas hay contra el cupo del
+plan y no deja activar de más, y tiene un botón "Probar conexión" que abre el
 RTSP brevemente con `cv2.VideoCapture` (la misma librería que usa
 `camera_source.py`) para confirmar que conecta antes de guardar.
 
