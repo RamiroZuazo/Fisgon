@@ -69,6 +69,11 @@ class CameraManager:
             )
             activas = activas[:max_cameras]
 
+        # Se guarda la config de todas para poder reportar también las que no
+        # están corriendo: la web tiene que poder mostrar "configurada pero
+        # desactivada" o "fuera del cupo del plan", no solo las que andan.
+        self._config_camaras = list(config.get("cameras", []))
+
         self._sources = {}
         for cam_cfg in activas:
             self._sources[cam_cfg["id"]] = CameraSource(
@@ -97,6 +102,33 @@ class CameraManager:
         """Devuelve {camera_id: estado} con estado en
         connecting/connected/reconnecting/failed/stopped."""
         return {camera_id: source.status for camera_id, source in self._sources.items()}
+
+    def reporte(self) -> list:
+        """Estado de todas las cámaras configuradas, corran o no.
+
+        Pensado para el pulso de vida que se manda a la nube (ver
+        upload/heartbeat.py), así la web puede distinguir una cámara caída de
+        una que el operador desactivó o que el plan no permite.
+        """
+        fuera_de_cupo = {str(cam.get("id")) for cam in self.fuera_de_cupo}
+        filas = []
+        for cam_cfg in self._config_camaras:
+            cam_id = str(cam_cfg.get("id"))
+            source = self._sources.get(cam_id)
+            if source is not None:
+                estado = source.status
+                sin_frame = source.segundos_sin_frame()
+            elif cam_id in fuera_de_cupo:
+                estado, sin_frame = "out_of_quota", None
+            else:
+                estado, sin_frame = "disabled", None
+            filas.append({
+                "camera_id": cam_id,
+                "name": cam_cfg.get("name"),
+                "status": estado,
+                "seconds_since_last_frame": sin_frame,
+            })
+        return filas
 
 
 if __name__ == "__main__":

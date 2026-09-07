@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 
 from capture.camera_manager import CameraManager
 from upload.edge_config import cargar_cupo
+from upload.heartbeat import HeartbeatWorker
 from events.event_validator import EventValidator
 from events.local_buffer import LocalBuffer
 from events.video_clip_manager import VideoClipManager
@@ -123,6 +124,10 @@ def main():
         max_cameras=cupo["max_cameras"],
     )
 
+    # Pulso de vida: sin esto, un local sin alertas es indistinguible en la web
+    # de un local con el sistema caído.
+    heartbeat = HeartbeatWorker(config, camera_manager, inference_worker)
+
     stop_event_principal = threading.Event()
 
     def manejar_señal(signum, frame):
@@ -137,6 +142,7 @@ def main():
 
     upload_worker.start()
     inference_worker.start()
+    heartbeat.start()
     camera_manager.start_all()
 
     logger.info("Pipeline en marcha. Ctrl+C para detener.")
@@ -157,6 +163,8 @@ def main():
         clip_manager.stop()
         logger.info("Deteniendo worker de subida...")
         upload_worker.stop()
+        logger.info("Deteniendo pulso de vida...")
+        heartbeat.stop()
         buffer.close()
         logger.info("=== Pipeline detenido ===")
 

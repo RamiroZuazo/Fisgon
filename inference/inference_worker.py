@@ -34,6 +34,7 @@ Uso típico (ver main.py):
 import logging
 import queue
 import threading
+import time
 from collections import defaultdict
 
 logger = logging.getLogger("inference_worker")
@@ -69,12 +70,23 @@ class InferenceWorker:
         # para poder confirmar (ej. en logs) que una cámara dada llega a
         # correr por el modelo y no solo se conecta/encola.
         self._frames_procesados = defaultdict(int)
+        # Momento (monótono) del último frame que pasó por el modelo, por
+        # cámara. Con el submuestreo por movimiento, una cámara conectada
+        # pero en reposo manda pocos frames al modelo: esto distingue
+        # "llega video" de "lo estamos mirando".
+        self._ultima_inferencia = {}
         self._stats_lock = threading.Lock()
 
     def get_stats(self) -> dict:
         """{camera_id: frames procesados por el modelo desde que arrancó el worker}."""
         with self._stats_lock:
             return dict(self._frames_procesados)
+
+    def segundos_sin_inferencia(self) -> dict:
+        """{camera_id: hace cuántos segundos pasó por el modelo la última vez}."""
+        ahora = time.monotonic()
+        with self._stats_lock:
+            return {cam: round(ahora - t, 1) for cam, t in self._ultima_inferencia.items()}
 
     def start(self):
         self._stop_event.clear()
@@ -119,9 +131,11 @@ class InferenceWorker:
             verbose=False,
         )
 
+        ahora = time.monotonic()
         with self._stats_lock:
             for item in lote:
                 self._frames_procesados[item["camera_id"]] += 1
+                self._ultima_inferencia[item["camera_id"]] = ahora
         logger.debug(f"Lote procesado: {[item['camera_id'] for item in lote]}")
 
         for item, resultado in zip(lote, resultados):

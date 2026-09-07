@@ -64,6 +64,11 @@ class CameraSource:
         self._thread = None
         self._stop_event = threading.Event()
         self.status = "stopped"  # stopped | connecting | connected | reconnecting | failed
+        # Momento del último frame leído de la cámara. Se guarda en reloj
+        # monótono y se reporta como antigüedad: si se guardaran timestamps
+        # absolutos, un reloj mal puesto en la PC del cliente mostraría
+        # 'última señal hace 3 días' en la web sin que pase nada raro.
+        self._ultimo_frame = None
 
     def start(self):
         self._stop_event.clear()
@@ -112,6 +117,7 @@ class CameraSource:
                     break
 
                 now = time.monotonic()
+                self._ultimo_frame = now
 
                 if self.on_video_frame is not None:
                     try:
@@ -145,6 +151,12 @@ class CameraSource:
                 logger.info(f"[{self.camera_id}] Reintentando en {delay}s...")
                 self._stop_event.wait(delay)
                 reconnect_idx = min(reconnect_idx + 1, len(RECONNECT_DELAYS) - 1)
+
+    def segundos_sin_frame(self):
+        """Hace cuánto llegó el último frame, o None si nunca llegó ninguno."""
+        if self._ultimo_frame is None:
+            return None
+        return round(time.monotonic() - self._ultimo_frame, 1)
 
     def _detectar_movimiento(self, frame, prev_gray):
         """Compara una versión chica en escala de grises del frame contra la

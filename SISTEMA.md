@@ -211,6 +211,23 @@ Se consulta una vez por arranque del pipeline, desde `main.py`, antes de
 levantar las cámaras. Como el pipeline se reinicia con cada guardado de
 configuración, en la práctica se refresca seguido.
 
+### `upload/heartbeat.py`
+Thread separado que cada `heartbeat.interval_seconds` (300 por defecto,
+mínimo 30) hace `POST /edge/heartbeat` con el estado de **todas** las
+cámaras configuradas: `camera_id`, `name`, `status`, hace cuánto llegó su
+último frame y hace cuánto pasó por el modelo. Sin esto, un local sin
+alertas es indistinguible en la web de un local con el sistema caído.
+
+Se mandan **antigüedades en segundos, no timestamps**: el edge corre en la
+PC del cliente y su reloj puede estar mal, así que la nube convierte usando
+el suyo. Y el pulso **no se reintenta ni se bufferea**, a diferencia de los
+eventos: un pulso perdido no es información perdida porque el siguiente lo
+reemplaza entero, y que no llegue *es* la señal de que algo anda mal.
+
+El reporte incluye las cámaras que no están corriendo, con estado
+`disabled` (desactivada en config) u `out_of_quota` (excede el plan), para
+que la web pueda distinguirlas de una cámara caída.
+
 ### `upload/upload_worker.py`
 Thread separado. Cada `poll_interval_seconds` revisa el buffer local y
 hace `POST {api_url}/events` con el payload de cada evento pendiente,

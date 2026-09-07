@@ -64,6 +64,7 @@ DEFAULT_CONFIG = {
     "inference": {"model_path": "models/best.onnx", "confidence": 0.5, "iou": 0.45, "inference_fps": 5},
     "event_validation": {"min_consecutive_detections": 3, "window_seconds": 5},
     "event_video": {"enabled": True, "seconds_before": 10, "seconds_after": 10, "fps": 5, "max_width": 960},
+    "heartbeat": {"interval_seconds": 300},
     "api": {"base_url": ""},
     "cameras": [],
 }

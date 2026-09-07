@@ -27,15 +27,19 @@ cameras:
   name: Webcam de prueba (PC)
   rtsp_url: '0'
   active: false
-- id: cam_2
-  name: patio
-  rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/401
-  active: false
 - id: cam_3
-  name: Entrada
-  rtsp_url: rtsp://admin:qwer1234@192.168.1.11:554/Streaming/Channels/201
-  active: false
+  name: Tiandy 2
+  rtsp_url: rtsp://admin:Fisgon2026@192.168.100.67:554/profile1
+  active: true
 - id: cam_4
   name: Tiandy
   rtsp_url: rtsp://admin:Fisgon2026@192.168.100.31:554/profile1
+  active: true
+- id: cam_2
+  name: CASA1
+  rtsp_url: rtsp://admin:qwer1234@192.168.100.19:554/Streaming/Channels/201
+  active: true
+- id: cam_5
+  name: CASA2
+  rtsp_url: rtsp://admin:qwer1234@192.168.100.19:554/Streaming/Channels/101
   active: true
