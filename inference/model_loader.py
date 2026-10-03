@@ -28,6 +28,15 @@ from pathlib import Path
 # Tiene que setearse ANTES de importar ultralytics.
 os.environ.setdefault("ULTRALYTICS_SKIP_REQUIREMENTS_CHECKS", "1")
 
+# torch (que ultralytics usa para pre/postprocesar) trae OpenMP de Intel, cuyos
+# hilos se quedan girando ~200ms después de cada operación esperando más
+# trabajo. Como el worker llama a predict() cada 100-200ms, nunca llegan a
+# dormirse: medido en esta PC (i5-9400F, 2 cámaras a 5 fps), ~2.8 núcleos
+# quemados en espera activa contra ~0.3 con esto en 0. No afecta la latencia
+# de inferencia (la red corre en la GPU vía DirectML, no en estos hilos).
+# Igual que la anterior, tiene que setearse ANTES de que se importe torch.
+os.environ.setdefault("KMP_BLOCKTIME", "0")
+
 # Permite ejecutar este archivo directamente además de importarlo como
 # inference.model_loader desde main.py
 sys.path.insert(0, str(Path(__file__).parent.parent))
