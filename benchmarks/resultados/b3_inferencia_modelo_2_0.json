@@ -1,0 +1,108 @@
+{
+  "fecha": "2026-10-13T01:26:53",
+  "equipo": {
+    "procesador": "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz",
+    "nucleos_logicos": 6,
+    "memoria_gb": 15.9
+  },
+  "modelo": {
+    "ruta": "models/best_2_0.onnx",
+    "bytes": 103799692
+  },
+  "frames": {
+    "origen": "capturas de las cámaras configuradas",
+    "resoluciones": [
+      "1280x720",
+      "1920x1080"
+    ]
+  },
+  "conf": 0.7,
+  "iou": 0.45,
+  "latencia_por_lote": {
+    "1": {
+      "ms_por_llamada": {
+        "media": 86.96,
+        "mediana": 86.85,
+        "p95": 89.88,
+        "min": 75.56,
+        "max": 91.29
+      },
+      "ms_por_frame": 86.96
+    },
+    "2": {
+      "ms_por_llamada": {
+        "media": 101.38,
+        "mediana": 103.35,
+        "p95": 106.57,
+        "min": 89.26,
+        "max": 111.73
+      },
+      "ms_por_frame": 50.69
+    },
+    "3": {
+      "ms_por_llamada": {
+        "media": 148.23,
+        "mediana": 143.19,
+        "p95": 185.74,
+        "min": 133.06,
+        "max": 204.31
+      },
+      "ms_por_frame": 49.41
+    },
+    "4": {
+      "ms_por_llamada": {
+        "media": 184.3,
+        "mediana": 184.62,
+        "p95": 200.75,
+        "min": 167.27,
+        "max": 205.46
+      },
+      "ms_por_frame": 46.08
+    }
+  },
+  "techo_frames_por_s": {
+    "1": 11.61,
+    "4": 21.26
+  },
+  "cpu_peor_caso": {
+    "1_camara": {
+      "llamadas_por_s_objetivo": 5,
+      "frames_por_llamada": 1,
+      "frames_por_s_logrados": 5.0,
+      "llamadas_atrasadas_pct": 0.0,
+      "cpu_proceso_pct": {
+        "media": 7.72,
+        "mediana": 7.68,
+        "p95": 8.65,
+        "min": 7.03,
+        "max": 8.78
+      }
+    },
+    "4_camaras_sin_agrupar": {
+      "llamadas_por_s_objetivo": 20,
+      "frames_por_llamada": 1,
+      "frames_por_s_logrados": 11.4,
+      "llamadas_atrasadas_pct": 100.0,
+      "cpu_proceso_pct": {
+        "media": 16.84,
+        "mediana": 16.67,
+        "p95": 17.72,
+        "min": 15.75,
+        "max": 17.83
+      }
+    },
+    "4_camaras_agrupadas": {
+      "llamadas_por_s_objetivo": 5,
+      "frames_por_llamada": 4,
+      "frames_por_s_logrados": 19.95,
+      "llamadas_atrasadas_pct": 6.0,
+      "cpu_proceso_pct": {
+        "media": 15.31,
+        "mediana": 15.23,
+        "p95": 16.8,
+        "min": 13.93,
+        "max": 17.83
+      }
+    }
+  }
+}

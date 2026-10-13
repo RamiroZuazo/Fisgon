@@ -1,0 +1,40 @@
+{
+  "descripcion": "Produccion final: 4 camaras IP reales, filtro de movimiento activo, 5 FPS, lote max 4, modelo 2.0 (best.onnx md5 149bcf82), cola de 20 que descarta el frame mas viejo, equipo sin otras cargas",
+  "fecha": "2026-10-13T01:49:28",
+  "equipo": {
+    "procesador": "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz",
+    "nucleos_logicos": 6,
+    "memoria_gb": 15.9
+  },
+  "pid": 10524,
+  "duracion_s": 600.0,
+  "muestras": 120,
+  "cpu_proceso_pct": {
+    "media": 24.96,
+    "mediana": 26.02,
+    "p95": 29.63,
+    "min": 16.98,
+    "max": 31.25
+  },
+  "cpu_equipo_pct": {
+    "media": 45.87,
+    "mediana": 43.9,
+    "p95": 63.8,
+    "min": 30.1,
+    "max": 69.1
+  },
+  "rss_mb": {
+    "media": 351.56,
+    "mediana": 324.4,
+    "p95": 502.9,
+    "min": 308.7,
+    "max": 547.1
+  },
+  "fps_inferencia_por_camara": {
+    "cam_3": 3.3,
+    "cam_4": 3.2,
+    "cam_5": 2.55,
+    "cam_2": 0.97
+  },
+  "fps_inferencia_total": 10.02
+}

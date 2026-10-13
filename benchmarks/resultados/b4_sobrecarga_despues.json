@@ -1,0 +1,52 @@
+{
+  "fecha": "2026-10-13T01:34:56",
+  "tamanio_cola": 20,
+  "camaras": [
+    "cam_3",
+    "cam_4",
+    "cam_2",
+    "cam_5"
+  ],
+  "segundos_por_fase": 60,
+  "fases": {
+    "normal": {
+      "frames_procesados": 607,
+      "frames_por_s": 10.12,
+      "edad_frame_s": {
+        "media": 0.04,
+        "mediana": 0.03,
+        "p95": 0.11,
+        "min": 0.0,
+        "max": 0.19
+      },
+      "cola_max": 2,
+      "rss_mb_max": 671.1
+    },
+    "sobrecarga": {
+      "frames_procesados": 363,
+      "frames_por_s": 6.05,
+      "edad_frame_s": {
+        "media": 0.58,
+        "mediana": 0.14,
+        "p95": 1.66,
+        "min": 0.0,
+        "max": 2.09
+      },
+      "cola_max": 20,
+      "rss_mb_max": 700.1
+    },
+    "recuperacion": {
+      "frames_procesados": 439,
+      "frames_por_s": 7.32,
+      "edad_frame_s": {
+        "media": 0.05,
+        "mediana": 0.03,
+        "p95": 0.11,
+        "min": 0.0,
+        "max": 0.83
+      },
+      "cola_max": 3,
+      "rss_mb_max": 644.3
+    }
+  }
+}

@@ -20,3 +20,7 @@ config_ui/auth_store.json
 
 # Cupo de cámaras cacheado desde la API (lo regenera el pipeline)
 .edge_config.json
+
+# Imágenes de las pruebas del bloque C: muestran personas, no se suben
+benchmarks/resultados/c_snapshots/
+benchmarks/resultados/c2_demora_camara/

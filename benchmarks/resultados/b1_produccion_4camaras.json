@@ -1,0 +1,40 @@
+{
+  "descripcion": "Produccion: 4 camaras IP reales (cam_2, cam_3, cam_4, cam_5), filtro de movimiento activo, 5 FPS, lote max 4, modelo best.onnx del 13/07",
+  "fecha": "2026-10-13T01:11:48",
+  "equipo": {
+    "procesador": "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz",
+    "nucleos_logicos": 6,
+    "memoria_gb": 15.9
+  },
+  "pid": 5868,
+  "duracion_s": 600.0,
+  "muestras": 120,
+  "cpu_proceso_pct": {
+    "media": 24.79,
+    "mediana": 26.1,
+    "p95": 29.12,
+    "min": 16.3,
+    "max": 30.47
+  },
+  "cpu_equipo_pct": {
+    "media": 65.16,
+    "mediana": 65.75,
+    "p95": 100.0,
+    "min": 35.8,
+    "max": 100.0
+  },
+  "rss_mb": {
+    "media": 406.12,
+    "mediana": 340.1,
+    "p95": 981.3,
+    "min": 323.4,
+    "max": 1153.7
+  },
+  "fps_inferencia_por_camara": {
+    "cam_3": 3.62,
+    "cam_4": 3.53,
+    "cam_5": 2.63,
+    "cam_2": 1.0
+  },
+  "fps_inferencia_total": 10.78
+}

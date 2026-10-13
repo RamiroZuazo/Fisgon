@@ -442,6 +442,80 @@ Confirmar con `python -c "import torch._dynamo"` aislado (sin
 `ultralytics` en el medio) — si eso solo ya falla, es este bug.
 `requirements.txt` fija `numpy==2.4.4` explícitamente por esto.
 
+### 5.10 — Bajo sobrecarga, el pipeline analizaba el pasado
+Encontrado por medición, no por un síntoma visible. Midiendo el consumo
+del sistema en producción con 4 cámaras, otra carga pesada en la misma
+máquina llevó la CPU al 100 % durante un minuto. En `logs/edge.log` la
+cola de frames pasó de 0 a 200 (su máximo) en 35 segundos y la memoria
+del proceso subió de 340 MB a 1,15 GB.
+
+La causa era la combinación de dos decisiones que por separado parecían
+razonables: una cola grande (`Queue(maxsize=200)`) y, al llenarse,
+descartar el frame **nuevo** (`camera_source._enqueue`). Ante un pico de
+CPU la cola se llenaba de frames viejos y el modelo los procesaba en orden
+mientras tiraba los actuales: con ~11 frames/s de procesamiento, 200
+encolados son ~18 s de atraso. Para un sistema que promete alertar en
+menos de 3 s (RNF001), una cola grande no protege nada: solo mide cuánto
+pasado acumula.
+
+**Corrección**: la cola mide un segundo de frames (`inference_fps` × cámaras
+activas, `camera_manager.tamanio_cola`) y al llenarse se descarta el frame
+**más viejo**. Ante una sobrecarga se procesan menos frames, pero todos
+recientes.
+
+**Verificación** con `benchmarks/prueba_sobrecarga.py` (4 cámaras reales,
+60 s normales + 60 s con un proceso por núcleo al 100 % + 60 s de
+recuperación), antes y después:
+
+| Durante la sobrecarga | Antes | Después |
+|---|---|---|
+| Antigüedad del frame procesado, mediana | 1,77 s | 0,14 s |
+| Antigüedad del frame procesado, p95 | 7,41 s | 1,66 s |
+| Antigüedad del frame procesado, máximo | 7,88 s | 2,09 s |
+| Memoria máxima | 866 MB | 700 MB |
+
+Ya en la fase de recuperación, la versión anterior seguía procesando
+frames de hasta 5,45 s de antigüedad (vaciando la cola); la corregida, 0,83 s.
+Pruebas de regresión en `tests/test_cola_frames.py`.
+
+### 5.11 — Los eventos esperaban hasta 10 s antes de salir hacia la API
+Encontrado leyendo el código para instrumentar la latencia de alerta
+(RNF001: menos de 3 s). `upload_worker` solo subía eventos en su revisión
+periódica (`DEFAULT_POLL_INTERVAL = 10`): un evento confirmado quedaba
+guardado en `eventos.db` y esperaba entre 0 y 10 s hasta el próximo ciclo.
+
+Medido con 5 detecciones reales (cámara Tiandy 2, `cam_3`): la espera fue de
+2,6 a 5,3 s en los casos normales, sobre totales de 4,4 a 7,3 s desde la
+primera detección hasta la respuesta de la API.
+
+**Corrección**: `main.py` llama a `UploadWorker.nuevo_evento()` apenas guarda
+el evento, y eso despierta al worker con un `threading.Event`. La revisión
+periódica sigue existiendo, ahora solo como reintento de lo que no se pudo
+subir. La opción `upload.envio_inmediato` de `cameras.yaml` (verdadera por
+defecto) permite volver al comportamiento anterior, solo para medirlo.
+Pruebas en `tests/test_latencia_alerta.py`.
+
+### 5.12 — Un clip de video trababa la alerta siguiente
+Encontrado en la misma medición. Los clips (~4 MB, 20 s de video) se subían
+en el mismo hilo que los eventos, justo después de ellos. Línea de tiempo
+real (`logs/edge.log`, 12/10 21:02–21:03):
+
+- 21:02:51,8 — se sube el evento #134 y, en el mismo ciclo, empieza a subirse
+  el clip del #133.
+- 21:02:56,9 — se confirma el evento #135. Queda esperando.
+- 21:03:06,2 — termina el clip (14 s).
+- 21:03:16,3 — en la revisión siguiente sale recién el #135.
+
+Total del #135: **28,3 s** desde la primera detección hasta la respuesta de
+la API. Con la corrección 5.11 sola no alcanzaba: el worker se despertaba,
+pero seguía ocupado con el video.
+
+**Corrección**: los clips se suben en un hilo propio (`upload-videos`). La
+alerta es lo urgente; el clip puede llegar unos segundos después. Prueba de
+regresión: `test_un_video_lento_no_demora_una_alerta`, que simula un clip que
+tarda 3 s en subir y exige que un evento nuevo salga en menos de 1 s mientras
+tanto.
+
 ---
 
 ## 6. La investigación de rendimiento (por qué importa tanto)
