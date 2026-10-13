@@ -20,6 +20,7 @@ Uso típico (ver camera_manager.py para orquestar varias):
 """
 
 import cv2
+import queue
 import time
 import threading
 import logging
@@ -199,12 +200,23 @@ class CameraSource:
             "frame": frame,
             "timestamp": timestamp,
         }
-        try:
-            self.frame_queue.put_nowait(item)
-        except Exception:
-            # Cola llena: se descarta el frame más nuevo antes que bloquear
-            # (evita que una cámara lenta trabe a las demás).
-            logger.debug(f"[{self.camera_id}] Cola llena, frame descartado")
+        # Cola llena: se descarta el frame MÁS VIEJO y entra el nuevo, nunca se
+        # bloquea (una cámara no puede trabar a las demás). Antes se descartaba
+        # el nuevo: ante un pico de CPU la cola se llenaba de frames viejos y
+        # el modelo analizaba imágenes de varios segundos atrás mientras tiraba
+        # las actuales — medido en benchmarks/prueba_sobrecarga.py, ver
+        # SISTEMA.md sección 5.10. Para vigilancia lo que importa es el presente.
+        for _ in range(2):
+            try:
+                self.frame_queue.put_nowait(item)
+                return
+            except queue.Full:
+                try:
+                    self.frame_queue.get_nowait()
+                    logger.debug(f"[{self.camera_id}] Cola llena, se descartó el frame más viejo")
+                except queue.Empty:
+                    pass  # otro hilo la vació entre medio: se reintenta el put
+        logger.debug(f"[{self.camera_id}] Cola llena, frame descartado")
 
     def _safe_url(self):
         # Oculta credenciales al loguear (rtsp://user:pass@ip -> rtsp://ip)

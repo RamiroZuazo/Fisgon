@@ -36,6 +36,23 @@ from capture.camera_source import CameraSource, INFERENCE_FPS
 logger = logging.getLogger("camera_manager")
 
 
+def tamanio_cola(config: dict) -> int:
+    """Un segundo de frames: inference_fps por cada cámara activa.
+
+    La cola solo existe para absorber picos cortos. Una cola más larga no
+    protege nada: ante una sobrecarga se llena de frames viejos y el sistema
+    pasa a mirar el pasado (con 200 lugares se midieron frames de hasta 8 s
+    de antigüedad, SISTEMA.md sección 5.10). Al llenarse, camera_source
+    descarta el más viejo.
+
+    Lo usa main.py para crear la cola que comparten todas las cámaras.
+    """
+    activas = sum(1 for cam in config.get("cameras", []) if cam.get("active"))
+    fps = config.get("inference", {}).get("inference_fps", INFERENCE_FPS)
+    # Nunca 0: Queue(maxsize=0) significa cola infinita.
+    return max(int(fps * activas), 1)
+
+
 class CameraManager:
     def __init__(self, config: dict, frame_queue, on_video_frame=None, max_cameras=None):
         """
