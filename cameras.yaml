@@ -20,6 +20,10 @@ event_video:
   fps: 5
   max_width: 960
   jpeg_quality: 80
+upload:
+  # true: el evento se sube apenas se confirma (SISTEMA.md 5.11). false solo
+  # sirve para medir el comportamiento anterior.
+  envio_inmediato: true
 api:
   base_url: https://fisgon-trial-account-backend-921400978711.us-central1.run.app
 cameras:

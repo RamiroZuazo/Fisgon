@@ -139,9 +139,9 @@ class InferenceWorker:
         logger.debug(f"Lote procesado: {[item['camera_id'] for item in lote]}")
 
         for item, resultado in zip(lote, resultados):
-            self._procesar_resultado(item, resultado)
+            self._procesar_resultado(item, resultado, ahora)
 
-    def _procesar_resultado(self, item: dict, resultado):
+    def _procesar_resultado(self, item: dict, resultado, t_inferencia: float):
         camera_id = item["camera_id"]
         frame = item["frame"]
         timestamp = item["timestamp"]
@@ -165,6 +165,9 @@ class InferenceWorker:
                 "bbox": bbox,
                 "frame": frame,
                 "timestamp": timestamp,
+                # Cuándo terminó la inferencia de este frame: marca de la
+                # medición de latencia de alerta (ver upload_worker).
+                "t_inferencia": t_inferencia,
             }
             self.on_detection(deteccion)
 

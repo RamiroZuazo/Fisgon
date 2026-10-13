@@ -17,6 +17,7 @@ import logging
 import signal
 import sys
 import threading
+import time
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from queue import Queue
@@ -24,7 +25,7 @@ from queue import Queue
 import yaml
 from dotenv import load_dotenv
 
-from capture.camera_manager import CameraManager
+from capture.camera_manager import CameraManager, tamanio_cola
 from upload.edge_config import cargar_cupo
 from upload.heartbeat import HeartbeatWorker
 from events.event_validator import EventValidator
@@ -80,7 +81,7 @@ def main():
 
     logger.info("=== Iniciando pipeline edge ===")
 
-    frame_queue = Queue(maxsize=200)
+    frame_queue = Queue(maxsize=tamanio_cola(config))
 
     logger.info("Cargando modelo YOLOv8 (ONNX + DirectML)...")
     modelo = cargar_modelo(config["inference"]["model_path"])
@@ -92,7 +93,12 @@ def main():
 
     def guardar_evento_y_generar_clip(payload: dict):
         detection_timestamp = payload.pop("detection_monotonic")
+        marcas = payload.pop("marcas", {})
         event_id = buffer.save_pending(payload, wait_for_video=clip_manager.enabled)
+        marcas["guardado"] = time.monotonic()
+        # Despierta al upload_worker para que suba ya, sin esperar su próxima
+        # revisión periódica (ver UploadWorker.nuevo_evento).
+        upload_worker.nuevo_evento(event_id, marcas)
         if clip_manager.enabled:
             clip_manager.request_clip(
                 payload["camera_id"],

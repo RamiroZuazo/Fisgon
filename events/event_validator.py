@@ -25,6 +25,7 @@ Uso típico (ver main.py):
 import base64
 import logging
 import threading
+import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 
@@ -71,12 +72,16 @@ class EventValidator:
 
             self._confirmados_recientes[clave] = timestamp
             frames_validated = len(historial)
+            # Primera detección de la racha que confirma: desde acá corre la
+            # latencia de alerta que el sistema puede medir (lo anterior es
+            # la demora de la cámara, ver upload_worker._registrar_latencia).
+            primera_captura = historial[0]
 
         logger.info(
             f"[{camera_id}] Evento confirmado: {object_class} "
             f"({frames_validated} detecciones en {self.window_seconds}s)"
         )
-        self._confirmar_evento(deteccion, frames_validated)
+        self._confirmar_evento(deteccion, frames_validated, primera_captura)
 
     @staticmethod
     def _bbox_a_xywh(bbox_xyxy) -> dict:
@@ -100,7 +105,7 @@ class EventValidator:
         cv2.putText(anotado, etiqueta, (x1 + 3, y_etiqueta - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         return anotado
 
-    def _confirmar_evento(self, deteccion: dict, frames_validated: int):
+    def _confirmar_evento(self, deteccion: dict, frames_validated: int, primera_captura: float):
         frame_anotado = self._dibujar_deteccion(
             deteccion["frame"], deteccion["bbox"], deteccion["object_class"], deteccion["confidence"]
         )
@@ -117,6 +122,15 @@ class EventValidator:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             # Solo se usa localmente para centrar el clip. upload_worker no lo envía.
             "detection_monotonic": deteccion["timestamp"],
+            # Marcas de tiempo (time.monotonic) para medir la latencia de
+            # alerta etapa por etapa. Solo locales: main.py las saca del
+            # payload y se las pasa a upload_worker, que nunca las envía.
+            "marcas": {
+                "captura_primera": primera_captura,
+                "captura_confirmante": deteccion["timestamp"],
+                "inferencia": deteccion.get("t_inferencia"),
+                "confirmacion": time.monotonic(),
+            },
         }
         self.on_event_confirmed(payload)
 
