@@ -1,0 +1,58 @@
+{
+  "fecha": "2026-10-12T21:25:05",
+  "configuracion_edge": {
+    "timeout_post_s": 10,
+    "revision_periodica_s": 10,
+    "envio_inmediato": true
+  },
+  "corte_conexion_rechazada": {
+    "modo": "rechazar",
+    "duracion_corte_s": 25.0,
+    "eventos_generados": 3,
+    "pendientes_al_final_del_corte": 3,
+    "segundos_hasta_subir_tras_restablecer": [
+      8.02,
+      8.22,
+      8.38
+    ],
+    "eventos_perdidos": 0,
+    "eventos_creados_en_api": 3,
+    "duplicados": 0
+  },
+  "corte_silencioso": {
+    "modo": "colgar",
+    "duracion_corte_s": 25.0,
+    "eventos_generados": 3,
+    "pendientes_al_final_del_corte": 3,
+    "segundos_hasta_subir_tras_restablecer": [
+      0.31,
+      0.52,
+      0.66
+    ],
+    "eventos_perdidos": 0,
+    "eventos_creados_en_api": 3,
+    "duplicados": 0
+  },
+  "caida_del_proceso": {
+    "eventos_generados": 3,
+    "codigo_salida_proceso_muerto": -15,
+    "pendientes_al_reabrir_la_base": 3,
+    "segundos_hasta_subir_tras_reiniciar": [
+      0.2,
+      0.34,
+      0.56
+    ],
+    "eventos_perdidos": 0,
+    "eventos_creados_en_api": 3,
+    "duplicados": 0
+  },
+  "respuesta_perdida": {
+    "eventos_generados": 1,
+    "creados_en_api_con_la_respuesta_perdida": 1,
+    "segundos_hasta_subir_tras_restablecer": [
+      3.33
+    ],
+    "eventos_creados_en_api": 2,
+    "duplicados": 1
+  }
+}
