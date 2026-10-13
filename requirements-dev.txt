@@ -1,0 +1,3 @@
+# Dependencias para correr la suite de pruebas (tests/). No hacen falta en el
+# equipo del cliente: solo para desarrollo y para el workflow de CI.
+pytest==9.1.1

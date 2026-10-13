@@ -1,0 +1,23 @@
+# Corre la suite de pruebas del edge en cada push y pull request.
+#
+# Instala solo lo que importan los módulos probados (events/ y upload/): el
+# pipeline completo necesita onnxruntime-directml y una GPU, que el runner no
+# tiene, pero ninguna prueba los usa. Las versiones son las de requirements.txt.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: pip install opencv-python==4.13.0.92 numpy==2.4.4 requests==2.33.1 -r requirements-dev.txt
+      - name: Correr pruebas
+        run: python -m pytest -v
