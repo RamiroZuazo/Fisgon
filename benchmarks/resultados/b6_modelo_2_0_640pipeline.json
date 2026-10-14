@@ -1,0 +1,80 @@
+{
+  "fecha": "2026-10-13T23:53:37",
+  "condicion": "pipeline de produccion corriendo (4 camaras): valores absolutos inflados, valida la comparacion entre modelos y resoluciones medidos uno tras otro",
+  "imgsz_pedido": "sin especificar (como el pipeline: 640 por defecto de ultralytics)",
+  "tensor_entrada_primer_frame": [
+    1,
+    3,
+    384,
+    640
+  ],
+  "equipo": {
+    "procesador": "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz",
+    "nucleos_logicos": 6,
+    "memoria_gb": 15.9
+  },
+  "modelo": {
+    "ruta": "models/best_2_0.onnx",
+    "bytes": 103799692,
+    "proveedores_onnx": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ]
+  },
+  "frames": {
+    "origen": "capturas de las cámaras configuradas",
+    "resoluciones": [
+      "1280x720",
+      "1920x1080"
+    ]
+  },
+  "conf": 0.7,
+  "iou": 0.45,
+  "latencia_por_lote": {
+    "1": {
+      "ms_por_llamada": {
+        "media": 92.19,
+        "mediana": 91.62,
+        "p95": 98.07,
+        "min": 87.69,
+        "max": 99.08
+      },
+      "ms_por_frame": 92.19
+    },
+    "2": {
+      "ms_por_llamada": {
+        "media": 109.45,
+        "mediana": 110.57,
+        "p95": 116.23,
+        "min": 98.18,
+        "max": 118.99
+      },
+      "ms_por_frame": 54.72
+    },
+    "3": {
+      "ms_por_llamada": {
+        "media": 158.35,
+        "mediana": 154.96,
+        "p95": 195.69,
+        "min": 137.16,
+        "max": 204.5
+      },
+      "ms_por_frame": 52.78
+    },
+    "4": {
+      "ms_por_llamada": {
+        "media": 201.48,
+        "mediana": 195.08,
+        "p95": 247.21,
+        "min": 178.79,
+        "max": 260.82
+      },
+      "ms_por_frame": 50.37
+    }
+  },
+  "techo_frames_por_s": {
+    "1": 10.79,
+    "4": 20.75
+  },
+  "cpu_peor_caso": null
+}

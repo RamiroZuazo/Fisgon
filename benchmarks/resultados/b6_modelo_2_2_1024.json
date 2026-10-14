@@ -1,0 +1,80 @@
+{
+  "fecha": "2026-10-13T23:59:27",
+  "condicion": "pipeline de produccion corriendo (4 camaras): valores absolutos inflados, valida la comparacion entre modelos y resoluciones medidos uno tras otro",
+  "imgsz_pedido": 1024,
+  "tensor_entrada_primer_frame": [
+    1,
+    3,
+    576,
+    1024
+  ],
+  "equipo": {
+    "procesador": "Intel(R) Core(TM) i5-9400F CPU @ 2.90GHz",
+    "nucleos_logicos": 6,
+    "memoria_gb": 15.9
+  },
+  "modelo": {
+    "ruta": "C:/Users/fisgon/vexp/modelo_2_2/best.onnx",
+    "bytes": 103841765,
+    "proveedores_onnx": [
+      "DmlExecutionProvider",
+      "CPUExecutionProvider"
+    ]
+  },
+  "frames": {
+    "origen": "capturas de las cámaras configuradas",
+    "resoluciones": [
+      "1280x720",
+      "1920x1080"
+    ]
+  },
+  "conf": 0.7,
+  "iou": 0.45,
+  "latencia_por_lote": {
+    "1": {
+      "ms_por_llamada": {
+        "media": 128.71,
+        "mediana": 104.65,
+        "p95": 194.73,
+        "min": 94.19,
+        "max": 195.59
+      },
+      "ms_por_frame": 128.71
+    },
+    "2": {
+      "ms_por_llamada": {
+        "media": 153.22,
+        "mediana": 150.39,
+        "p95": 178.62,
+        "min": 138.29,
+        "max": 197.15
+      },
+      "ms_por_frame": 76.61
+    },
+    "3": {
+      "ms_por_llamada": {
+        "media": 352.76,
+        "mediana": 345.14,
+        "p95": 401.69,
+        "min": 328.68,
+        "max": 421.53
+      },
+      "ms_por_frame": 117.59
+    },
+    "4": {
+      "ms_por_llamada": {
+        "media": 469.36,
+        "mediana": 475.25,
+        "p95": 506.75,
+        "min": 424.19,
+        "max": 509.18
+      },
+      "ms_por_frame": 117.34
+    }
+  },
+  "techo_frames_por_s": {
+    "1": 7.77,
+    "4": 8.52
+  },
+  "cpu_peor_caso": null
+}

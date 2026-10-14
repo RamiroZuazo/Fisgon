@@ -158,6 +158,14 @@ def main():
     parser.add_argument("--modelo", help="ruta al .onnx (por defecto, el de cameras.yaml)")
     parser.add_argument("--repeticiones", type=int, default=100)
     parser.add_argument("--segundos", type=float, default=60, help="duración de cada prueba de CPU")
+    parser.add_argument("--sin-cpu", action="store_true",
+                        help="omite la prueba de CPU sostenida (no es medible con el pipeline corriendo; "
+                             "latencia y techo siguen sirviendo para comparar modelos entre sí)")
+    parser.add_argument("--imgsz", type=int,
+                        help="resolución de entrada. Sin esta opción se llama al modelo como lo hace hoy "
+                             "inference_worker (sin imgsz): ultralytics usa 640, no la del modelo")
+    parser.add_argument("--condicion", default="pipeline detenido",
+                        help="condición del equipo durante la medición, queda en el resultado")
     args = parser.parse_args()
 
     config = yaml.safe_load(open(args.config, encoding="utf-8"))
@@ -172,19 +180,48 @@ def main():
     proveedores = modelo.predictor.model.session.get_providers()
     print(f"Proveedores de la sesión ONNX: {proveedores}")
 
+    if args.imgsz:
+        predict_original = modelo.predict
+
+        def predict_con_imgsz(*a, **k):
+            return predict_original(*a, imgsz=args.imgsz, **k)
+
+        modelo.predict = predict_con_imgsz
+
+    # Forma real del tensor que entra a la sesión ONNX: la única fuente que no
+    # depende de lo que diga la configuración.
+    sesion = modelo.predictor.model.session
+    formas = []
+    run_original = sesion.run
+
+    def run_espia(salidas, entradas, *a, **k):
+        if not formas:
+            formas.extend(tuple(v.shape) for v in entradas.values())
+        return run_original(salidas, entradas, *a, **k)
+
+    sesion.run = run_espia
+    modelo.predict(source=frames[:1], conf=CONF, iou=IOU, verbose=False)
+    sesion.run = run_original
+    print(f"Tensor de entrada para un frame de {frames[0].shape[1]}x{frames[0].shape[0]}: {formas[0]}")
+
     print("1) Latencia por tamaño de lote")
     latencias = latencia_por_lote(modelo, frames, args.repeticiones)
     print("2) Techo de rendimiento")
     techo = {tamanio: techo_rendimiento(modelo, frames, tamanio, 30) for tamanio in (1, 4)}
-    print("3) CPU sostenida, peor caso sin filtro de movimiento")
-    cpu = {
-        "1_camara": cpu_a_ritmo_fijo(modelo, frames, 5, 1, args.segundos),
-        "4_camaras_sin_agrupar": cpu_a_ritmo_fijo(modelo, frames, 20, 1, args.segundos),
-        "4_camaras_agrupadas": cpu_a_ritmo_fijo(modelo, frames, 5, 4, args.segundos),
-    }
+    cpu = None
+    if not args.sin_cpu:
+        print("3) CPU sostenida, peor caso sin filtro de movimiento")
+        cpu = {
+            "1_camara": cpu_a_ritmo_fijo(modelo, frames, 5, 1, args.segundos),
+            "4_camaras_sin_agrupar": cpu_a_ritmo_fijo(modelo, frames, 20, 1, args.segundos),
+            "4_camaras_agrupadas": cpu_a_ritmo_fijo(modelo, frames, 5, 4, args.segundos),
+        }
 
     informe = {
         "fecha": datetime.now().isoformat(timespec="seconds"),
+        "condicion": args.condicion,
+        "imgsz_pedido": args.imgsz or "sin especificar (como el pipeline: 640 por defecto de ultralytics)",
+        "tensor_entrada_primer_frame": list(formas[0]),
         "equipo": {
             "procesador": nombre_procesador(),
             "nucleos_logicos": psutil.cpu_count(logical=True),
