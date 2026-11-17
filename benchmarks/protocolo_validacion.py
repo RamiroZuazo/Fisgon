@@ -4,7 +4,8 @@ Guía la sesión de validación funcional (bloque G) y registra cuándo estuvo e
 arma a la vista, que es la verdad de referencia para el recall por evento.
 
 Sirve una página que muestra cada ensayo en grande (distancia, ángulo,
-iluminación), con tres fases y un pitido en cada cambio:
+iluminación), con tres fases y un pitido en cada cambio (duraciones por defecto,
+se cambian con --prep, --mostra, --esconde y --luz):
     PREPARATE  12 s  ubicarse en la posición, con el arma escondida
     MOSTRÁ      4 s  mostrar el arma hacia la cámara
     ESCONDÉ    8 s  esconder el arma (separa un ensayo del siguiente)
@@ -73,7 +74,7 @@ PAGINA = """<!doctype html>
 <div><button id="btn" onclick="empezar()">Empezar</button><button onclick="pausar()">Pausa</button></div>
 <script>
 const ENSAYOS = __ENSAYOS__;
-const T_PREP = 12, T_MOSTRA = 4, T_ESCONDE = 8, T_LUZ = 25;
+const T_PREP = __T_PREP__, T_MOSTRA = __T_MOSTRA__, T_ESCONDE = __T_ESCONDE__, T_LUZ = __T_LUZ__;
 let i = 0, pausado = false, corriendo = false, ctx = null;
 
 function pitido(ms, f) {
@@ -140,14 +141,28 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--salida", required=True)
     parser.add_argument("--objeto", choices=sorted(OBJETOS), default="arma")
+    # Duraciones en segundos. Entre el fin de un ensayo y el inicio del siguiente
+    # (esconde + prep) tiene que haber más de ~9 s: el arma sigue a la vista unos
+    # 4 s mientras se guarda y el validador no confirma otro evento de la misma
+    # clase durante window_seconds (5 s), así que un hueco menor tapa el ensayo
+    # siguiente.
+    parser.add_argument("--prep", type=int, default=12)
+    parser.add_argument("--mostra", type=int, default=4)
+    parser.add_argument("--esconde", type=int, default=8)
+    parser.add_argument("--luz", type=int, default=25, help="pausa para apagar la luz")
     args = parser.parse_args()
+    if args.esconde + args.prep < 10:
+        parser.error("esconde + prep tiene que ser de al menos 10 s (ver el comentario de las duraciones)")
     salida = Path(args.salida)
     salida.parent.mkdir(parents=True, exist_ok=True)
     ensayos = armar_ensayos()
     objeto, terminacion = OBJETOS[args.objeto]
     pagina = (PAGINA.replace("__ENSAYOS__", json.dumps(ensayos, ensure_ascii=False))
               .replace("__OBJETO_MAY__", objeto[0].upper() + objeto[1:])
-              .replace("__OBJETO__", objeto).replace("__A__", terminacion)).encode("utf-8")
+              .replace("__OBJETO__", objeto).replace("__A__", terminacion)
+              .replace("__T_PREP__", str(args.prep)).replace("__T_MOSTRA__", str(args.mostra))
+              .replace("__T_ESCONDE__", str(args.esconde)).replace("__T_LUZ__", str(args.luz))).encode("utf-8")
+    print(f"Duraciones: preparate {args.prep} s, mostrá {args.mostra} s, escondé {args.esconde} s, luz {args.luz} s")
     campos = ["hora_utc", "hora_legible", "evento", "n", "distancia", "angulo", "luz", "repeticion"]
     if not salida.exists():
         with open(salida, "w", newline="", encoding="utf-8") as f:

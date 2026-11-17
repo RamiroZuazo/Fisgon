@@ -1,0 +1,38 @@
+hora_utc,hora_legible,evento,n,distancia,angulo,luz,repeticion
+1794955090.298,19:38:10.298,inicio,1,"cerca (~1,5 m)",de frente,encendida,1
+1794955094.328,19:38:14.327,fin,1,"cerca (~1,5 m)",de frente,encendida,1
+1794955114.491,19:38:34.491,inicio,2,"cerca (~1,5 m)",de costado,encendida,1
+1794955118.529,19:38:38.528,fin,2,"cerca (~1,5 m)",de costado,encendida,1
+1794955138.703,19:38:58.703,inicio,3,media (~3 m),de frente,encendida,1
+1794955142.732,19:39:02.731,fin,3,media (~3 m),de frente,encendida,1
+1794955162.910,19:39:22.910,inicio,4,media (~3 m),de costado,encendida,1
+1794955166.947,19:39:26.946,fin,4,media (~3 m),de costado,encendida,1
+1794955187.110,19:39:47.109,inicio,5,lejos (fondo),de frente,encendida,1
+1794955191.145,19:39:51.145,fin,5,lejos (fondo),de frente,encendida,1
+1794955211.303,19:40:11.302,inicio,6,lejos (fondo),de costado,encendida,1
+1794955215.342,19:40:15.341,fin,6,lejos (fondo),de costado,encendida,1
+1794955235.486,19:40:35.486,inicio,7,"cerca (~1,5 m)",de frente,encendida,2
+1794955239.533,19:40:39.532,fin,7,"cerca (~1,5 m)",de frente,encendida,2
+1794955259.690,19:40:59.690,inicio,8,"cerca (~1,5 m)",de costado,encendida,2
+1794955263.737,19:41:03.737,fin,8,"cerca (~1,5 m)",de costado,encendida,2
+1794955283.919,19:41:23.918,inicio,9,media (~3 m),de frente,encendida,2
+1794955287.961,19:41:27.960,fin,9,media (~3 m),de frente,encendida,2
+1794955308.131,19:41:48.131,inicio,10,media (~3 m),de costado,encendida,2
+1794955312.157,19:41:52.156,fin,10,media (~3 m),de costado,encendida,2
+1794955332.313,19:42:12.313,inicio,11,lejos (fondo),de frente,encendida,2
+1794955336.355,19:42:16.355,fin,11,lejos (fondo),de frente,encendida,2
+1794955301.016,19:41:41.016,inicio,12,lejos (fondo),de costado,encendida,2
+1794955305.039,19:41:45.039,fin,12,lejos (fondo),de costado,encendida,2
+1794955350.335,19:42:30.334,inicio,13,"cerca (~1,5 m)",de frente,apagada,1
+1794955354.380,19:42:34.379,fin,13,"cerca (~1,5 m)",de frente,apagada,1
+1794955374.512,19:42:54.512,inicio,14,"cerca (~1,5 m)",de costado,apagada,1
+1794955378.538,19:42:58.538,fin,14,"cerca (~1,5 m)",de costado,apagada,1
+1794955398.696,19:43:18.696,inicio,15,media (~3 m),de frente,apagada,1
+1794955402.710,19:43:22.710,fin,15,media (~3 m),de frente,apagada,1
+1794955422.875,19:43:42.874,inicio,16,media (~3 m),de costado,apagada,1
+1794955426.906,19:43:46.905,fin,16,media (~3 m),de costado,apagada,1
+1794955447.088,19:44:07.087,inicio,17,lejos (fondo),de frente,apagada,1
+1794955451.132,19:44:11.132,fin,17,lejos (fondo),de frente,apagada,1
+1794955471.313,19:44:31.313,inicio,18,lejos (fondo),de costado,apagada,1
+1794955475.333,19:44:35.333,fin,18,lejos (fondo),de costado,apagada,1
+1794955483.420,19:44:43.420,sesion_terminada,,,,,

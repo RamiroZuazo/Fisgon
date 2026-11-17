@@ -1,0 +1,877 @@
+{
+  "sesion": {
+    "ensayos": 18,
+    "camara": "cam_3",
+    "duracion_s": 410.0,
+    "detecciones_registradas_en_la_sesion": 561,
+    "validador": {
+      "min_consecutive_detections": 2,
+      "window_seconds": 5
+    },
+    "margen_fin_ventana_s": 1.5,
+    "clase_esperada": "pistol"
+  },
+  "por_umbral": {
+    "0.20": {
+      "ensayos_detectados": 11,
+      "recall_por_evento": 0.611,
+      "no_detectados": [
+        5,
+        9,
+        11,
+        14,
+        15,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 11
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.29,
+        1.62,
+        1.64,
+        1.74,
+        1.79,
+        2.04,
+        2.13,
+        2.23,
+        2.32,
+        2.59,
+        2.75
+      ],
+      "falsas_alarmas_en_la_sesion": 14,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.8
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 33.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 94.4
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 143.3
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 151.8
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 167.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 170.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 175.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 181.2
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 208.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 250.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "7/9",
+        "angulo: de frente": "4/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "4/6",
+        "luz: apagada": "2/6",
+        "luz: encendida": "9/12"
+      }
+    },
+    "0.30": {
+      "ensayos_detectados": 11,
+      "recall_por_evento": 0.611,
+      "no_detectados": [
+        5,
+        9,
+        11,
+        14,
+        15,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 11
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.29,
+        1.62,
+        1.64,
+        1.74,
+        1.79,
+        2.04,
+        2.31,
+        2.32,
+        2.59,
+        2.75,
+        2.77
+      ],
+      "falsas_alarmas_en_la_sesion": 12,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.8
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 34.4
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 143.3
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 167.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 171.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 176.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 182.0
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 208.6
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "7/9",
+        "angulo: de frente": "4/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "4/6",
+        "luz: apagada": "2/6",
+        "luz: encendida": "9/12"
+      }
+    },
+    "0.35": {
+      "ensayos_detectados": 12,
+      "recall_por_evento": 0.667,
+      "no_detectados": [
+        5,
+        11,
+        14,
+        15,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 12
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        0.08,
+        1.29,
+        1.62,
+        1.71,
+        1.74,
+        1.79,
+        2.04,
+        2.59,
+        2.75,
+        2.77,
+        3.44,
+        4.32
+      ],
+      "falsas_alarmas_en_la_sesion": 8,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.8
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 171.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 177.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 183.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "7/9",
+        "angulo: de frente": "5/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "5/6",
+        "luz: apagada": "2/6",
+        "luz: encendida": "10/12"
+      }
+    },
+    "0.40": {
+      "ensayos_detectados": 12,
+      "recall_por_evento": 0.667,
+      "no_detectados": [
+        5,
+        11,
+        14,
+        15,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 12
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        0.08,
+        1.29,
+        1.62,
+        1.71,
+        1.74,
+        1.86,
+        2.04,
+        2.59,
+        2.75,
+        3.51,
+        3.64,
+        4.32
+      ],
+      "falsas_alarmas_en_la_sesion": 8,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 171.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 177.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 183.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "7/9",
+        "angulo: de frente": "5/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "5/6",
+        "luz: apagada": "2/6",
+        "luz: encendida": "10/12"
+      }
+    },
+    "0.50": {
+      "ensayos_detectados": 11,
+      "recall_por_evento": 0.611,
+      "no_detectados": [
+        5,
+        11,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 11
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.29,
+        1.62,
+        1.71,
+        1.74,
+        1.86,
+        2.04,
+        2.59,
+        3.04,
+        3.51,
+        3.64,
+        4.32
+      ],
+      "falsas_alarmas_en_la_sesion": 7,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 175.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 354.3
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "6/9",
+        "angulo: de frente": "5/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "4/6",
+        "luz: apagada": "1/6",
+        "luz: encendida": "10/12"
+      }
+    },
+    "0.55": {
+      "ensayos_detectados": 10,
+      "recall_por_evento": 0.556,
+      "no_detectados": [
+        5,
+        9,
+        11,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 10
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.29,
+        1.7,
+        1.71,
+        1.74,
+        1.86,
+        2.04,
+        2.59,
+        3.51,
+        3.64,
+        4.32
+      ],
+      "falsas_alarmas_en_la_sesion": 7,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "knife",
+          "segundos_desde_inicio_sesion": 177.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.1
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 354.3
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "6/9",
+        "angulo: de frente": "4/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "3/6",
+        "luz: apagada": "1/6",
+        "luz: encendida": "9/12"
+      }
+    },
+    "0.60": {
+      "ensayos_detectados": 10,
+      "recall_por_evento": 0.556,
+      "no_detectados": [
+        5,
+        9,
+        11,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 10
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.37,
+        1.7,
+        1.71,
+        1.81,
+        1.86,
+        2.04,
+        2.59,
+        3.51,
+        3.64,
+        4.32
+      ],
+      "falsas_alarmas_en_la_sesion": 6,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 21.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 95.7
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.2
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 354.3
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "6/9",
+        "angulo: de frente": "4/9",
+        "distancia: cerca (~1,5 m)": "5/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "3/6",
+        "luz: apagada": "1/6",
+        "luz: encendida": "9/12"
+      }
+    },
+    "0.70": {
+      "ensayos_detectados": 9,
+      "recall_por_evento": 0.5,
+      "no_detectados": [
+        5,
+        9,
+        11,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "clase_del_primer_evento": {
+        "pistol": 9
+      },
+      "confusiones_de_clase": {},
+      "ensayos_solo_con_clase_equivocada": [],
+      "segundos_hasta_el_frame_confirmante": [
+        1.37,
+        1.71,
+        1.89,
+        2.04,
+        2.59,
+        3.51,
+        4.32,
+        4.67,
+        5.22
+      ],
+      "falsas_alarmas_en_la_sesion": 3,
+      "falsas_alarmas_detalle": [
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 191.5
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 239.2
+        },
+        {
+          "camera_id": "cam_3",
+          "object_class": "pistol",
+          "segundos_desde_inicio_sesion": 305.9
+        }
+      ],
+      "por_condicion": {
+        "angulo: de costado": "6/9",
+        "angulo: de frente": "3/9",
+        "distancia: cerca (~1,5 m)": "4/6",
+        "distancia: lejos (fondo)": "2/6",
+        "distancia: media (~3 m)": "3/6",
+        "luz: apagada": "0/6",
+        "luz: encendida": "9/12"
+      }
+    }
+  },
+  "por_ensayo": {
+    "1": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 22,
+      "confianza_maxima": 0.782,
+      "clases_detectadas": {
+        "knife": 2,
+        "pistol": 20
+      }
+    },
+    "2": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 45,
+      "confianza_maxima": 0.841,
+      "clases_detectadas": {
+        "pistol": 45
+      }
+    },
+    "3": {
+      "distancia": "media (~3 m)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 38,
+      "confianza_maxima": 0.798,
+      "clases_detectadas": {
+        "pistol": 38
+      }
+    },
+    "4": {
+      "distancia": "media (~3 m)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 47,
+      "confianza_maxima": 0.837,
+      "clases_detectadas": {
+        "pistol": 47
+      }
+    },
+    "5": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 0,
+      "confianza_maxima": 0,
+      "clases_detectadas": {}
+    },
+    "6": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 5,
+      "confianza_maxima": 0.802,
+      "clases_detectadas": {
+        "pistol": 5
+      }
+    },
+    "7": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 25,
+      "confianza_maxima": 0.837,
+      "clases_detectadas": {
+        "pistol": 25
+      }
+    },
+    "8": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 48,
+      "confianza_maxima": 0.889,
+      "clases_detectadas": {
+        "knife": 7,
+        "pistol": 41
+      }
+    },
+    "9": {
+      "distancia": "media (~3 m)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 6,
+      "confianza_maxima": 0.584,
+      "clases_detectadas": {
+        "pistol": 6
+      }
+    },
+    "10": {
+      "distancia": "media (~3 m)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 50,
+      "confianza_maxima": 0.824,
+      "clases_detectadas": {
+        "pistol": 50
+      }
+    },
+    "11": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de frente",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 0,
+      "confianza_maxima": 0,
+      "clases_detectadas": {}
+    },
+    "12": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de costado",
+      "luz": "encendida",
+      "repeticion": "2",
+      "frames_con_deteccion_en_la_ventana": 3,
+      "confianza_maxima": 0.832,
+      "clases_detectadas": {
+        "pistol": 3
+      }
+    },
+    "13": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de frente",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 8,
+      "confianza_maxima": 0.834,
+      "clases_detectadas": {
+        "pistol": 8
+      }
+    },
+    "14": {
+      "distancia": "cerca (~1,5 m)",
+      "angulo": "de costado",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 0,
+      "confianza_maxima": 0,
+      "clases_detectadas": {}
+    },
+    "15": {
+      "distancia": "media (~3 m)",
+      "angulo": "de frente",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 0,
+      "confianza_maxima": 0,
+      "clases_detectadas": {}
+    },
+    "16": {
+      "distancia": "media (~3 m)",
+      "angulo": "de costado",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 3,
+      "confianza_maxima": 0.687,
+      "clases_detectadas": {
+        "pistol": 3
+      }
+    },
+    "17": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de frente",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 0,
+      "confianza_maxima": 0,
+      "clases_detectadas": {}
+    },
+    "18": {
+      "distancia": "lejos (fondo)",
+      "angulo": "de costado",
+      "luz": "apagada",
+      "repeticion": "1",
+      "frames_con_deteccion_en_la_ventana": 1,
+      "confianza_maxima": 0.601,
+      "clases_detectadas": {
+        "pistol": 1
+      }
+    }
+  }
+}
