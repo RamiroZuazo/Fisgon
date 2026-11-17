@@ -23,6 +23,15 @@ Por cada resultado:
   - Por cada detección con confidence >= umbral, arma un dict de detección
     y lo pasa a on_detection() (normalmente event_validator.procesar_deteccion)
 
+Registro de detecciones (opcional, para la validación funcional): con
+registro_detecciones.enabled en cameras.yaml, cada detección con confianza >=
+registro_detecciones.min_confidence se escribe en un CSV, aunque quede por
+debajo del umbral del sistema. El modelo se llama con el menor de los dos
+umbrales y lo que alerta sigue filtrándose con inference.confidence, así que el
+comportamiento del sistema no cambia. Sirve para calcular después el recall por
+evento con cualquier umbral, reproduciendo el validador temporal sobre el
+registro (benchmarks/analizar_validacion.py).
+
 Uso típico (ver main.py):
     from inference.inference_worker import InferenceWorker
     worker = InferenceWorker(frame_queue, modelo, config, on_detection=validador.procesar_deteccion)
@@ -31,11 +40,14 @@ Uso típico (ver main.py):
     worker.stop()
 """
 
+import csv
 import logging
 import queue
 import threading
 import time
 from collections import defaultdict
+from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger("inference_worker")
 
@@ -63,6 +75,15 @@ class InferenceWorker:
         self.iou = config.get("inference", {}).get("iou", 0.45)
         self.max_batch_size = config.get("inference", {}).get("max_batch_size", DEFAULT_MAX_BATCH_SIZE)
         self.on_detection = on_detection
+
+        registro = config.get("registro_detecciones") or {}
+        self._registro_csv = None
+        self.conf_modelo = self.confidence
+        if registro.get("enabled"):
+            self.conf_modelo = min(self.confidence, float(registro.get("min_confidence", 0.1)))
+            self._registro_csv = Path(registro.get("archivo", "logs/detecciones.csv"))
+            self._registro_csv.parent.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Registro de detecciones activo (confianza >= {self.conf_modelo}) en {self._registro_csv}")
 
         self._thread = None
         self._stop_event = threading.Event()
@@ -126,7 +147,7 @@ class InferenceWorker:
 
         resultados = self.modelo.predict(
             source=frames,
-            conf=self.confidence,
+            conf=self.conf_modelo,
             iou=self.iou,
             verbose=False,
         )
@@ -138,8 +159,35 @@ class InferenceWorker:
                 self._ultima_inferencia[item["camera_id"]] = ahora
         logger.debug(f"Lote procesado: {[item['camera_id'] for item in lote]}")
 
+        if self._registro_csv is not None:
+            self._registrar(lote, resultados)
+
         for item, resultado in zip(lote, resultados):
             self._procesar_resultado(item, resultado, ahora)
+
+    def _registrar(self, lote: list, resultados):
+        """Una fila por detección, con la hora UTC de la captura del frame
+        (derivada del reloj monotónico en que se capturó)."""
+        ahora_mono, ahora_utc = time.monotonic(), datetime.now(timezone.utc).timestamp()
+        filas = []
+        for item, resultado in zip(lote, resultados):
+            captura_utc = ahora_utc - (ahora_mono - item["timestamp"])
+            nombres = getattr(resultado, "names", None) or CLASS_NAMES_FALLBACK
+            for box in resultado.boxes:
+                clase = nombres.get(int(box.cls[0]), str(int(box.cls[0])))
+                filas.append([f"{captura_utc:.3f}", f"{item['timestamp']:.3f}", item["camera_id"],
+                              CLASS_NAME_API_MAP.get(clase, clase), f"{float(box.conf[0]):.4f}",
+                              *[round(v, 1) for v in box.xyxy[0].tolist()]])
+        try:
+            nuevo = not self._registro_csv.exists()
+            with open(self._registro_csv, "a", newline="", encoding="utf-8") as f:
+                escritor = csv.writer(f)
+                if nuevo:
+                    escritor.writerow(["captura_utc", "captura_monotonic", "camera_id", "object_class",
+                                       "confidence", "x1", "y1", "x2", "y2"])
+                escritor.writerows(filas)
+        except OSError:
+            logger.exception("No se pudo escribir el registro de detecciones")
 
     def _procesar_resultado(self, item: dict, resultado, t_inferencia: float):
         camera_id = item["camera_id"]

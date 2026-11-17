@@ -1,8 +1,8 @@
 inference:
   model_path: models/best.onnx
-  confidence: 0.7
+  confidence: 0.55
   iou: 0.45
-  inference_fps: 5
+  inference_fps: 15
   max_batch_size: 4
 motion_detection:
   enabled: true
@@ -20,9 +20,11 @@ event_video:
   fps: 5
   max_width: 960
   jpeg_quality: 80
+registro_detecciones:
+  enabled: true
+  min_confidence: 0.1
+  archivo: logs/detecciones_validacion.csv
 upload:
-  # true: el evento se sube apenas se confirma (SISTEMA.md 5.11). false solo
-  # sirve para medir el comportamiento anterior.
   envio_inmediato: true
 api:
   base_url: https://fisgon-trial-account-backend-921400978711.us-central1.run.app
@@ -33,17 +35,17 @@ cameras:
   active: false
 - id: cam_3
   name: Tiandy 2
-  rtsp_url: rtsp://admin:Fisgon2026@192.168.100.67:554/profile1
+  rtsp_url: rtsp://admin:Fisgon2026@192.168.77.67:554/profile1
   active: true
 - id: cam_4
   name: Tiandy
-  rtsp_url: rtsp://admin:Fisgon2026@192.168.100.31:554/profile1
-  active: true
+  rtsp_url: rtsp://admin:Fisgon2026@192.168.77.31:554/profile1
+  active: false
 - id: cam_2
   name: CASA1
   rtsp_url: rtsp://admin:qwer1234@192.168.100.19:554/Streaming/Channels/201
-  active: true
+  active: false
 - id: cam_5
   name: CASA2
   rtsp_url: rtsp://admin:qwer1234@192.168.100.19:554/Streaming/Channels/101
-  active: true
+  active: false
